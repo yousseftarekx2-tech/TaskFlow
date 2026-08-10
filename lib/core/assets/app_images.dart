@@ -24,10 +24,15 @@ class AppImages {
 
   // Authentication
   static const String google = 'assets/logos/logo_google.png';
+  static const String clock = 'assets/logos/clock.png';
   static const String login = 'assets/logos/logo-container.png';
   static const String signUp = 'assets/logos/logo_sign_up.png';
   static const String forgotPassword = 'assets/images/image_forget.png';
+  static const String verfication = 'assets/images/verification_image.png';
+  static const String createPassword = 'assets/images/create_password.png';
 
   // Home
   static const String emptyTask = 'assets/images/empty_task.png';
+  static const String static =
+      'assets/logos/icon-bar chart trends statistics.png';
 }

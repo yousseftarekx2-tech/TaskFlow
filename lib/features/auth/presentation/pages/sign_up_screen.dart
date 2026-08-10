@@ -153,8 +153,6 @@ class _SignUpState extends State<SignUp> {
                 ),
 
                 const SizedBox(height: AppSpacing.md),
-
-                // Confirm Password
                 Container(
                   padding: const EdgeInsets.only(left: 17, top: 5),
                   decoration: BoxDecoration(
@@ -196,8 +194,6 @@ class _SignUpState extends State<SignUp> {
                 ),
 
                 const SizedBox(height: AppSpacing.xl),
-
-                // Create Account
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -211,7 +207,6 @@ class _SignUpState extends State<SignUp> {
 
                 const SizedBox(height: AppSpacing.xl),
 
-                // OR
                 Row(
                   children: [
                     const Expanded(child: Divider()),
@@ -230,7 +225,6 @@ class _SignUpState extends State<SignUp> {
 
                 const SizedBox(height: AppSpacing.xl),
 
-                // Google
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -256,7 +250,6 @@ class _SignUpState extends State<SignUp> {
 
                 const SizedBox(height: AppSpacing.lg),
 
-                // Sign In
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

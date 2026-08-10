@@ -128,8 +128,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                             child: ElevatedButton(
                               onPressed: () {
                                 if (_formKey.currentState!.validate()) {
-                                  // Reset password logic
-                                  // هنضيف الـ authentication بعدين
+                                  context.go(Routes.verificationCode);
                                 }
                               },
                               child: const Text("Send Reset Link"),
