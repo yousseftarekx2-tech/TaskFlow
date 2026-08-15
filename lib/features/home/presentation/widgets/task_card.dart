@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:task_flow/core/constants/app_colors.dart';
+import 'package:task_flow/features/tasks/presentation/bloc/task_bloc.dart';
+import 'package:task_flow/features/tasks/presentation/bloc/task_event.dart';
 
 class TaskCard extends StatelessWidget {
   const TaskCard({
@@ -9,13 +13,17 @@ class TaskCard extends StatelessWidget {
     required this.time,
     required this.color,
     this.completed = false,
+    this.overdue = false,
+    required this.taskId,
   });
 
   final String title;
   final String category;
+  final String taskId;
   final String time;
   final Color color;
   final bool completed;
+  final bool overdue;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +36,7 @@ class TaskCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE2E8F0), width: 0.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -62,7 +70,7 @@ class TaskCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: completed
+                    color: completed || overdue
                         ? const Color(0xFF94A3B8)
                         : const Color(0xFF0F172A),
                     decoration: completed
@@ -83,7 +91,7 @@ class TaskCard extends StatelessWidget {
                         vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.08),
+                        color: color.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(7),
                       ),
                       child: Text(
@@ -126,19 +134,38 @@ class TaskCard extends StatelessWidget {
 
           const SizedBox(width: 12),
 
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: completed
-                  ? AppColors.needthis.withOpacity(0.10)
-                  : Colors.transparent,
-              border: Border.all(color: AppColors.needthis, width: 2),
+          InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: completed || overdue
+                ? null
+                : () {
+                    context.read<TaskBloc>().add(CompleteTask(taskId));
+                  },
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: completed
+                    ? AppColors.needthis.withValues(alpha: 0.10)
+                    : overdue
+                    ? Colors.red.withValues(alpha: 0.10)
+                    : Colors.transparent,
+                border: Border.all(
+                  color: completed
+                      ? AppColors.needthis
+                      : overdue
+                      ? Colors.red
+                      : AppColors.needthis,
+                  width: 2,
+                ),
+              ),
+              child: completed
+                  ? const Icon(Icons.check, color: AppColors.needthis, size: 17)
+                  : overdue
+                  ? const Icon(Icons.close_rounded, color: Colors.red, size: 17)
+                  : null,
             ),
-            child: completed
-                ? const Icon(Icons.check, color: AppColors.needthis, size: 17)
-                : null,
           ),
 
           const SizedBox(width: 18),

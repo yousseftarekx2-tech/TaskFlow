@@ -98,7 +98,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
 
-          TextButton(onPressed: _skipOnboarding, child: const Text('Skip')),
+          TextButton(
+            onPressed: _skipOnboarding,
+            child: Text(_currentPage == 2 ? '' : 'Skip'),
+          ),
 
           const SizedBox(height: AppSpacing.xxl),
         ],

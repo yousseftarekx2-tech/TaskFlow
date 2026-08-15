@@ -54,7 +54,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                     children: [
                       const SizedBox(height: AppSpacing.xl),
 
-                      Container(
+                      SizedBox(
                         height: 240,
                         width: 342,
                         child: Image.asset(AppImages.forgotPassword),

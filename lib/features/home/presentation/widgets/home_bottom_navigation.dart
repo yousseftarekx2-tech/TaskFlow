@@ -73,9 +73,9 @@ class HomeBottomNavigation extends StatelessWidget {
 
                 Expanded(
                   child: _NavigationItem(
-                    icon: Icons.settings_outlined,
-                    activeIcon: Icons.settings_rounded,
-                    label: 'Settings',
+                    icon: Icons.center_focus_strong_outlined,
+                    activeIcon: Icons.dashboard_outlined,
+                    label: 'Focus',
                     index: 3,
                     currentIndex: currentIndex,
                     onTap: onTap,
@@ -86,30 +86,37 @@ class HomeBottomNavigation extends StatelessWidget {
           ),
 
           Positioned(
-            top: -27,
+            top: -32,
             left: 0,
             right: 0,
             child: Center(
               child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: onAddTap,
-                child: Container(
-                  width: 54,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.needthis,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.needthis.withOpacity(0.30),
-                        blurRadius: 14,
-                        offset: const Offset(0, 6),
+                child: SizedBox(
+                  width: 70,
+                  height: 70,
+                  child: Center(
+                    child: Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.needthis,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.needthis.withValues(alpha: 0.30),
+                            blurRadius: 14,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.add_rounded,
-                    color: Colors.white,
-                    size: 30,
+                      child: const Icon(
+                        Icons.add_rounded,
+                        color: Colors.white,
+                        size: 30,
+                      ),
+                    ),
                   ),
                 ),
               ),

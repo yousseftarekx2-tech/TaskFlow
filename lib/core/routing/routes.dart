@@ -8,7 +8,17 @@ class Routes {
   static const String verificationCode = '/verification-code';
   static const String createPassword = '/create-password';
   static const String home = '/home';
+  static const String todayTasks = '/today-tasks';
+  static const String upcomingTasks = '/upcoming-tasks';
+  static const String state = '/state';
+  static const String task = '/task';
   static const String calendar = '/calendar';
+  static const String allTasks = '/all-tasks';
+  static const String completedTasks = '/completed-tasks';
+  static const String category = '/category';
   static const String focus = '/focus';
   static const String profile = '/profile';
+  static const String settings = '/settings';
+  static const String notifications = '/notifications';
+  static const String about = '/about';
 }
