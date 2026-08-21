@@ -25,6 +25,45 @@ class TaskModel {
 
   bool get isOverdue => status == TaskStatus.overdue;
 
+  // ============================================================
+  // TO JSON
+  // ============================================================
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'category': category,
+      'status': status.name,
+      'createdAt': createdAt.toIso8601String(),
+      'scheduledAt': scheduledAt.toIso8601String(),
+    };
+  }
+
+  // ============================================================
+  // FROM JSON
+  // ============================================================
+
+  factory TaskModel.fromJson(Map<String, dynamic> json) {
+    return TaskModel(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      category: json['category'] as String,
+      status: TaskStatus.values.firstWhere(
+        (status) => status.name == json['status'],
+        orElse: () => TaskStatus.pending,
+      ),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      scheduledAt: DateTime.parse(json['scheduledAt'] as String),
+    );
+  }
+
+  // ============================================================
+  // COPY WITH
+  // ============================================================
+
   TaskModel copyWith({
     String? id,
     String? title,

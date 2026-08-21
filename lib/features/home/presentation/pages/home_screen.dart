@@ -1,26 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:task_flow/core/assets/app_images.dart';
 import 'package:task_flow/core/constants/app_colors.dart';
 import 'package:task_flow/core/routing/routes.dart';
 import 'package:task_flow/core/theme/app_text_style/app_spacing.dart';
 import 'package:task_flow/core/theme/app_text_style/app_text_styles.dart';
+import 'package:task_flow/core/widgets/notification_icon_button.dart';
 
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:task_flow/features/auth/data/model/user_model.dart';
+import 'package:task_flow/features/auth/presentation/cubit/user_cubit.dart';
+
 import 'package:task_flow/features/home/presentation/widgets/home_task_card.dart';
 import 'package:task_flow/features/home/presentation/widgets/task_details_screen.dart';
-import 'package:task_flow/features/home/presentation/widgets/task_settings.dart';
-import 'package:task_flow/features/statistics/presentation/pages/stats_screen.dart';
-import 'package:task_flow/features/tasks/presentation/bloc/task_bloc.dart';
 import 'package:task_flow/features/home/presentation/widgets/home_drawer.dart';
+
+import 'package:task_flow/features/statistics/presentation/pages/stats_screen.dart';
+
 import 'package:task_flow/features/tasks/data/model/task_model.dart';
+import 'package:task_flow/features/tasks/presentation/bloc/task_bloc.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_state.dart';
 
-// ------------------------------------------------------------
-// EDIT SCREEN
-// ------------------------------------------------------------
-import 'package:task_flow/features/tasks/presentation/pages/create_task_screen.dart';
+import 'package:task_flow/features/settings/presnetation/cubit/settings_cubit.dart';
+
+import 'package:task_flow/l10n/app_localizations.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,14 +34,18 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final String userName = 'Youssef';
   final int notificationCount = 0;
 
   // ------------------------------------------------------------
   // UPCOMING TASKS
   // ------------------------------------------------------------
 
-  List<Widget> _buildUpcomingTasks(List<TaskModel> tasks, DateTime today) {
+  List<Widget> _buildUpcomingTasks(
+    List<TaskModel> tasks,
+    DateTime today,
+    bool isDark,
+    AppLocalizations l10n,
+  ) {
     final DateTime todayDate = DateTime(today.year, today.month, today.day);
 
     final List<TaskModel> upcomingTasks = tasks.where((task) {
@@ -56,15 +64,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (displayedTasks.isEmpty) {
       return [
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 24),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
           child: Center(
             child: Text(
-              'No upcoming tasks',
+              l10n.noUpcomingTasks,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF94A3B8),
+                color: isDark
+                    ? const Color(0xFF64748B)
+                    : const Color(0xFF94A3B8),
               ),
             ),
           ),
@@ -80,14 +90,10 @@ class _HomeScreenState extends State<HomeScreen> {
               title: task.title,
               category: task.category,
               taskId: task.id,
-              time: _formatTime(task.scheduledAt),
+              time: _formatTime(task.scheduledAt, l10n),
               color: _categoryColor(task.category),
               completed: task.isCompleted,
               overdue: task.isOverdue,
-
-              // ------------------------------------------------
-              // TASK SETTINGS
-              // ------------------------------------------------
               onTap: () {
                 Navigator.push(
                   context,
@@ -103,50 +109,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ------------------------------------------------------------
-  // UPCOMING TASK TIME
-  // ------------------------------------------------------------
-
-  String _upcomingTaskTime(TaskModel task) {
-    final DateTime now = DateTime.now();
-
-    final DateTime today = DateTime(now.year, now.month, now.day);
-
-    final DateTime taskDate = DateTime(
-      task.scheduledAt.year,
-      task.scheduledAt.month,
-      task.scheduledAt.day,
-    );
-
-    final int difference = taskDate.difference(today).inDays;
-
-    final String time = _formatTime(task.scheduledAt);
-
-    if (difference == 1) {
-      return 'Tomorrow • $time';
-    }
-
-    if (difference == 2) {
-      return 'In 2 days • $time';
-    }
-
-    if (difference == 3) {
-      return 'In 3 days • $time';
-    }
-
-    return '${task.scheduledAt.day}/'
-        '${task.scheduledAt.month}/'
-        '${task.scheduledAt.year} • $time';
-  }
-
-  // ------------------------------------------------------------
   // FORMAT TIME
   // ------------------------------------------------------------
 
-  String _formatTime(DateTime dateTime) {
+  String _formatTime(DateTime dateTime, AppLocalizations l10n) {
     final int hour = dateTime.hour;
     final int minute = dateTime.minute;
 
-    final String period = hour >= 12 ? 'PM' : 'AM';
+    final String period = hour >= 12 ? l10n.pm : l10n.am;
 
     final int displayHour = hour % 12 == 0 ? 12 : hour % 12;
 
@@ -181,11 +151,49 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<TaskBloc>().state;
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
 
-    final List<TaskModel> tasks = state is TaskLoaded ? state.tasks : [];
+    final taskState = context.watch<TaskBloc>().state;
+
+    final settingsState = context.watch<SettingsCubit>().state;
+
+    final bool isDark = settingsState.darkModeEnabled;
+
+    final List<TaskModel> tasks = taskState is TaskLoaded
+        ? taskState.tasks
+        : [];
 
     final DateTime today = DateTime.now();
+
+    // ------------------------------------------------------------
+    // THEME COLORS
+    // ------------------------------------------------------------
+
+    final Color backgroundColor = isDark
+        ? const Color(0xFF0F172A)
+        : const Color(0xFFF8FAFC);
+
+    final Color cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+
+    final Color primaryTextColor = isDark
+        ? const Color(0xFFF8FAFC)
+        : const Color(0xFF0F172A);
+
+    final Color secondaryTextColor = isDark
+        ? const Color(0xFF94A3B8)
+        : const Color(0xFF64748B);
+
+    final Color mutedTextColor = isDark
+        ? const Color(0xFF64748B)
+        : const Color(0xFF94A3B8);
+
+    final Color borderColor = isDark
+        ? const Color(0xFF334155)
+        : const Color(0xFFE2E8F0);
+
+    final Color iconBackgroundColor = isDark
+        ? const Color(0xFF312E81)
+        : const Color(0xFFEEF2FF);
 
     // ------------------------------------------------------------
     // TODAY'S TASKS
@@ -209,9 +217,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final double progress = totalTask == 0 ? 0 : completeTask / totalTask;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: backgroundColor,
 
-      drawer: const HomeDrawer(),
+      drawer: HomeDrawer(),
 
       body: SafeArea(
         child: SingleChildScrollView(
@@ -235,18 +243,20 @@ class _HomeScreenState extends State<HomeScreen> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: cardColor,
                               shape: BoxShape.circle,
-                              border: Border.all(
-                                color: const Color(0xFFE2E8F0),
-                              ),
+                              border: Border.all(color: borderColor),
                             ),
                             child: IconButton(
                               onPressed: () {
                                 Scaffold.of(context).openDrawer();
                               },
                               padding: EdgeInsets.zero,
-                              icon: const Icon(Icons.menu, size: 21),
+                              icon: Icon(
+                                Icons.menu,
+                                size: 21,
+                                color: primaryTextColor,
+                              ),
                             ),
                           );
                         },
@@ -257,21 +267,25 @@ class _HomeScreenState extends State<HomeScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Hello $userName 👋',
-                            style: AppTextStyle.bodyLarge.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF1E293B),
-                              fontSize: 18,
-                            ),
+                          BlocBuilder<UserCubit, UserModel?>(
+                            builder: (context, user) {
+                              return Text(
+                                '${l10n.hello}, ${user?.name ?? l10n.user}',
+                                style: AppTextStyle.bodyLarge.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryTextColor,
+                                  fontSize: 18,
+                                ),
+                              );
+                            },
                           ),
 
                           const SizedBox(height: 2),
 
                           Text(
-                            'Let\'s make today productive',
+                            l10n.letsMakeTodayProductive,
                             style: AppTextStyle.bodyMedium.copyWith(
-                              color: const Color(0xFF94A3B8),
+                              color: secondaryTextColor,
                               fontSize: 12,
                             ),
                           ),
@@ -280,65 +294,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
 
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(0xFFE2E8F0),
-                        width: 0.3,
-                      ),
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        context.go(Routes.notifications);
-                      },
-                      padding: EdgeInsets.zero,
-                      icon: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          const Icon(
-                            Icons.notifications_none_outlined,
-                            size: 22,
-                            color: Color(0xFF1E293B),
-                          ),
-
-                          if (notificationCount > 0)
-                            Positioned(
-                              right: -7,
-                              top: -7,
-                              child: Container(
-                                constraints: const BoxConstraints(
-                                  minWidth: 17,
-                                  minHeight: 17,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  notificationCount > 99
-                                      ? '99'
-                                      : '$notificationCount',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // --------------------------------------------------
+                  // NOTIFICATIONS
+                  // --------------------------------------------------
+                  NotificationIconButton(isDark: isDark),
                 ],
               ),
 
@@ -355,12 +314,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: const Color(0xFFE2E8F0),
-                    width: 0.8,
-                  ),
+                  border: Border.all(color: borderColor, width: 0.8),
                 ),
                 child: Row(
                   children: [
@@ -376,17 +332,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: CircularProgressIndicator(
                               value: progress,
                               strokeWidth: 6,
-                              backgroundColor: const Color(0xFFE2E8F0),
+                              backgroundColor: borderColor,
                               color: AppColors.needthis,
                             ),
                           ),
 
                           Text(
                             '${(progress * 100).round()}%',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1E293B),
+                              color: primaryTextColor,
                             ),
                           ),
                         ],
@@ -401,21 +357,21 @@ class _HomeScreenState extends State<HomeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Today\'s Progress',
+                            l10n.todaysProgress,
                             style: AppTextStyle.bodyMedium.copyWith(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFF1E293B),
+                              color: primaryTextColor,
                             ),
                           ),
 
                           const SizedBox(height: 5),
 
                           Text(
-                            '$completeTask of $totalTask tasks completed',
+                            l10n.tasksCompleted(completeTask, totalTask),
                             style: AppTextStyle.bodyMedium.copyWith(
                               fontSize: 12,
-                              color: const Color(0xFF475569),
+                              color: secondaryTextColor,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -427,12 +383,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEEF2FF),
+                        color: iconBackgroundColor,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFFE2E8F0),
-                          width: 0.3,
-                        ),
+                        border: Border.all(color: borderColor, width: 0.3),
                       ),
                       child: InkWell(
                         onTap: () {
@@ -458,10 +411,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Today\'s Tasks',
+                    l10n.todaysTasks,
                     style: AppTextStyle.bodyLarge.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF0F172A),
+                      color: primaryTextColor,
                       fontSize: 22,
                     ),
                   ),
@@ -473,7 +426,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Row(
                       children: [
                         Text(
-                          'See All',
+                          l10n.seeAll,
                           style: TextStyle(
                             color: AppColors.needthis,
                             fontSize: 15,
@@ -500,15 +453,15 @@ class _HomeScreenState extends State<HomeScreen> {
               // TODAY'S TASKS
               // --------------------------------------------------
               if (todayTasks.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Center(
                     child: Text(
-                      'No tasks for today',
+                      l10n.noTasksForToday,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF94A3B8),
+                        color: mutedTextColor,
                       ),
                     ),
                   ),
@@ -523,14 +476,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           title: task.title,
                           category: task.category,
                           taskId: task.id,
-                          time: _formatTime(task.scheduledAt),
+                          time: _formatTime(task.scheduledAt, l10n),
                           color: _categoryColor(task.category),
                           completed: task.isCompleted,
                           overdue: task.isOverdue,
-
-                          // ------------------------------------------------
-                          // TASK SETTINGS
-                          // ------------------------------------------------
                           onTap: () {
                             Navigator.push(
                               context,
@@ -552,10 +501,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Upcoming',
+                    l10n.upcoming,
                     style: AppTextStyle.bodyLarge.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF0F172A),
+                      color: primaryTextColor,
                       fontSize: 22,
                     ),
                   ),
@@ -567,7 +516,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Row(
                       children: [
                         Text(
-                          'See All',
+                          l10n.seeAll,
                           style: TextStyle(
                             color: AppColors.needthis,
                             fontSize: 15,
@@ -593,7 +542,7 @@ class _HomeScreenState extends State<HomeScreen> {
               // --------------------------------------------------
               // UPCOMING TASKS
               // --------------------------------------------------
-              ..._buildUpcomingTasks(tasks, today),
+              ..._buildUpcomingTasks(tasks, today, isDark, l10n),
 
               const SizedBox(height: 24),
             ],

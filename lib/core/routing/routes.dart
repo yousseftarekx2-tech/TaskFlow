@@ -21,4 +21,8 @@ class Routes {
   static const String settings = '/settings';
   static const String notifications = '/notifications';
   static const String about = '/about';
+  static const String notificationSettingsScreen = '/notification-setting';
+  static const String habits = '/habits';
+  static const String privacy = '/privacy';
+  static const String termsOfService = '/terms-of-service';
 }

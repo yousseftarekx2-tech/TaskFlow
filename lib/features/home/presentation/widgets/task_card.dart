@@ -27,16 +27,30 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    final Color titleColor = completed || overdue
+        ? colorScheme.onSurfaceVariant
+        : colorScheme.onSurface;
+
+    final Color secondaryColor = colorScheme.onSurfaceVariant;
+
     return Container(
       width: double.infinity,
       height: 96,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 0.5),
+        border: Border.all(
+          color: colorScheme.outline.withValues(alpha: 0.35),
+          width: 0.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(
+              alpha: theme.brightness == Brightness.dark ? 0.15 : 0.04,
+            ),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -70,13 +84,11 @@ class TaskCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: completed || overdue
-                        ? const Color(0xFF94A3B8)
-                        : const Color(0xFF0F172A),
+                    color: titleColor,
                     decoration: completed
                         ? TextDecoration.lineThrough
                         : TextDecoration.none,
-                    decorationColor: const Color(0xFF94A3B8),
+                    decorationColor: secondaryColor,
                     decorationThickness: 1.5,
                   ),
                 ),
@@ -106,10 +118,10 @@ class TaskCard extends StatelessWidget {
 
                     const SizedBox(width: 9),
 
-                    const Icon(
+                    Icon(
                       Icons.access_time_outlined,
                       size: 16,
-                      color: Color(0xFF94A3B8),
+                      color: secondaryColor,
                     ),
 
                     const SizedBox(width: 4),
@@ -119,8 +131,8 @@ class TaskCard extends StatelessWidget {
                         time,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF94A3B8),
+                        style: TextStyle(
+                          color: secondaryColor,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),

@@ -57,3 +57,7 @@ class UpdateTask extends TaskEvent {
   @override
   List<Object?> get props => [task];
 }
+class LoadTasks extends TaskEvent {
+  const LoadTasks();
+}
+

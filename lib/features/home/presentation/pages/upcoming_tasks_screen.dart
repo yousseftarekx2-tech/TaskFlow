@@ -6,6 +6,8 @@ import 'package:task_flow/features/home/presentation/widgets/task_card.dart';
 import 'package:task_flow/features/tasks/data/model/task_model.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_bloc.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_state.dart';
+import 'package:task_flow/features/settings/presnetation/cubit/settings_cubit.dart';
+import 'package:task_flow/l10n/app_localizations.dart';
 
 class UpcomingTasksScreen extends StatelessWidget {
   const UpcomingTasksScreen({super.key});
@@ -32,19 +34,24 @@ class UpcomingTasksScreen extends StatelessWidget {
     }
   }
 
-  String _formatTime(DateTime dateTime) {
+  String _formatTime(
+    DateTime dateTime,
+    AppLocalizations l10n,
+  ) {
     final int hour = dateTime.hour;
     final int minute = dateTime.minute;
 
-    final String period = hour >= 12 ? 'PM' : 'AM';
+    final String period = hour >= 12 ? l10n.pm : l10n.am;
 
-    final int displayHour =
-        hour % 12 == 0 ? 12 : hour % 12;
+    final int displayHour = hour % 12 == 0 ? 12 : hour % 12;
 
     return '$displayHour:${minute.toString().padLeft(2, '0')} $period';
   }
 
-  String _upcomingTaskTime(TaskModel task) {
+  String _upcomingTaskTime(
+    TaskModel task,
+    AppLocalizations l10n,
+  ) {
     final DateTime now = DateTime.now();
 
     final DateTime today = DateTime(
@@ -59,21 +66,19 @@ class UpcomingTasksScreen extends StatelessWidget {
       task.scheduledAt.day,
     );
 
-    final int difference =
-        taskDate.difference(today).inDays;
+    final int difference = taskDate.difference(today).inDays;
 
-    final String time = _formatTime(task.scheduledAt);
+    final String time = _formatTime(
+      task.scheduledAt,
+      l10n,
+    );
 
     if (difference == 1) {
-      return 'Tomorrow • $time';
+      return '${l10n.tomorrow} • $time';
     }
 
-    if (difference == 2) {
-      return 'In 2 days • $time';
-    }
-
-    if (difference == 3) {
-      return 'In 3 days • $time';
+    if (difference > 1) {
+      return '${l10n.inDays(difference)} • $time';
     }
 
     return '${task.scheduledAt.day}/'
@@ -83,10 +88,21 @@ class UpcomingTasksScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<TaskBloc>().state;
+    final AppLocalizations l10n =
+        AppLocalizations.of(context)!;
+
+    final taskState = context.watch<TaskBloc>().state;
+
+    final settingsState =
+        context.watch<SettingsCubit>().state;
+
+    final bool isDark =
+        settingsState.darkModeEnabled;
 
     final List<TaskModel> tasks =
-        state is TaskLoaded ? state.tasks : [];
+        taskState is TaskLoaded
+            ? taskState.tasks
+            : [];
 
     final DateTime today = DateTime.now();
 
@@ -96,54 +112,77 @@ class UpcomingTasksScreen extends StatelessWidget {
       today.day,
     );
 
-    final List<TaskModel> upcomingTasks = tasks.where((task) {
+    final List<TaskModel> upcomingTasks =
+        tasks.where((task) {
       final DateTime taskDate = DateTime(
         task.scheduledAt.year,
         task.scheduledAt.month,
         task.scheduledAt.day,
       );
 
-      // Upcoming = future pending tasks only.
       return taskDate.isAfter(todayDate) &&
           !task.isCompleted &&
           !task.isOverdue;
     }).toList();
 
     upcomingTasks.sort(
-      (a, b) => a.scheduledAt.compareTo(b.scheduledAt),
+      (a, b) => a.scheduledAt.compareTo(
+        b.scheduledAt,
+      ),
     );
 
+    // ------------------------------------------------------------
+    // THEME COLORS
+    // ------------------------------------------------------------
+
+    final Color backgroundColor = isDark
+        ? const Color(0xFF0F172A)
+        : const Color(0xFFF8FAFC);
+
+    final Color primaryTextColor = isDark
+        ? const Color(0xFFF8FAFC)
+        : const Color(0xFF0F172A);
+
+    final Color mutedTextColor = isDark
+        ? const Color(0xFF64748B)
+        : const Color(0xFF94A3B8);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: backgroundColor,
+
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: backgroundColor,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
+
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
+
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
             size: 20,
-            color: Color(0xFF0F172A),
+            color: primaryTextColor,
           ),
         ),
-        title: const Text(
-          'Upcoming',
+
+        title: Text(
+          l10n.upcoming,
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF0F172A),
+            color: primaryTextColor,
           ),
         ),
       ),
+
       body: upcomingTasks.isEmpty
-          ? const Center(
+          ? Center(
               child: Text(
-                'No upcoming tasks',
+                l10n.noUpcomingTasks,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF94A3B8),
+                  color: mutedTextColor,
                 ),
               ),
             )
@@ -154,18 +193,29 @@ class UpcomingTasksScreen extends StatelessWidget {
                 20,
                 30,
               ),
+
               itemCount: upcomingTasks.length,
+
               itemBuilder: (context, index) {
-                final TaskModel task = upcomingTasks[index];
+                final TaskModel task =
+                    upcomingTasks[index];
 
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.only(
+                    bottom: 12,
+                  ),
+
                   child: TaskCard(
                     title: task.title,
                     category: task.category,
                     taskId: task.id,
-                    time: _upcomingTaskTime(task),
-                    color: _categoryColor(task.category),
+                    time: _upcomingTaskTime(
+                      task,
+                      l10n,
+                    ),
+                    color: _categoryColor(
+                      task.category,
+                    ),
                     completed: task.isCompleted,
                     overdue: task.isOverdue,
                   ),

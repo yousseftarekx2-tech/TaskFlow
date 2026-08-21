@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:task_flow/l10n/app_localizations.dart';
 
 import 'package:task_flow/core/constants/app_colors.dart';
 import 'package:task_flow/features/tasks/data/model/task_model.dart';
@@ -67,16 +68,16 @@ class TaskDetailsScreen extends StatelessWidget {
   // STATUS TEXT
   // ============================================================
 
-  String _statusText() {
+  String _statusText(AppLocalizations l10n) {
     if (task.isCompleted) {
-      return 'Completed';
+      return l10n.completed;
     }
 
     if (task.isOverdue) {
-      return 'Overdue';
+      return l10n.overdue;
     }
 
-    return 'Pending';
+    return l10n.pending;
   }
 
   // ============================================================
@@ -102,40 +103,55 @@ class TaskDetailsScreen extends StatelessWidget {
   void _editTask(BuildContext context) {
     Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (_) => CreateTaskScreen(task: task)));
+    ).push(
+      MaterialPageRoute(
+        builder: (_) => CreateTaskScreen(task: task),
+      ),
+    );
   }
 
   // ============================================================
   // DELETE CONFIRMATION
   // ============================================================
 
-  Future<void> _showDeleteConfirmation(BuildContext context) async {
+  Future<void> _showDeleteConfirmation(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    final bool isDark =
+        Theme.of(context).brightness == Brightness.dark;
+
     final bool? confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: true,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor:
+              isDark ? const Color(0xFF1E293B) : Colors.white,
+
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
 
-          title: const Text(
-            'Delete Task',
+          title: Text(
+            l10n.deleteTaskTitle,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF0F172A),
+              color: isDark
+                  ? const Color(0xFFF8FAFC)
+                  : const Color(0xFF0F172A),
             ),
           ),
 
-          content: const Text(
-            'Are you sure you want to delete this task? '
-            'This action cannot be undone.',
+          content: Text(
+            l10n.deleteTaskConfirmation,
             style: TextStyle(
               fontSize: 14,
               height: 1.45,
-              color: Color(0xFF64748B),
+              color: isDark
+                  ? const Color(0xFFCBD5E1)
+                  : const Color(0xFF64748B),
             ),
           ),
 
@@ -144,10 +160,12 @@ class TaskDetailsScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.of(dialogContext).pop(false);
               },
-              child: const Text(
-                'Cancel',
+              child: Text(
+                l10n.cancel,
                 style: TextStyle(
-                  color: Color(0xFF64748B),
+                  color: isDark
+                      ? const Color(0xFFCBD5E1)
+                      : const Color(0xFF64748B),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -169,9 +187,12 @@ class TaskDetailsScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text(
-                'Delete',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              child: Text(
+                l10n.deleteTask,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
@@ -187,7 +208,9 @@ class TaskDetailsScreen extends StatelessWidget {
     // DELETE FROM BLOC
     // ------------------------------------------------------------
 
-    context.read<TaskBloc>().add(DeleteTask(task.id));
+    context.read<TaskBloc>().add(
+      DeleteTask(task.id),
+    );
 
     if (!context.mounted) {
       return;
@@ -206,14 +229,50 @@ class TaskDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color categoryColor = _categoryColor(task.category);
+    final AppLocalizations l10n =
+        AppLocalizations.of(context)!;
+
+    final bool isDark =
+        Theme.of(context).brightness == Brightness.dark;
+
+    // ============================================================
+    // THEME COLORS
+    // ============================================================
+
+    final Color backgroundColor = isDark
+        ? const Color(0xFF0F172A)
+        : const Color(0xFFF8FAFC);
+
+    final Color cardColor = isDark
+        ? const Color(0xFF1E293B)
+        : Colors.white;
+
+    final Color primaryTextColor = isDark
+        ? const Color(0xFFF8FAFC)
+        : const Color(0xFF0F172A);
+
+    final Color secondaryTextColor = isDark
+        ? const Color(0xFFCBD5E1)
+        : const Color(0xFF475569);
+
+    final Color borderColor = isDark
+        ? const Color(0xFF334155)
+        : const Color(0xFFE2E8F0);
+
+    final Color categoryColor =
+        _categoryColor(task.category);
+
     final Color statusColor = _statusColor();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: backgroundColor,
+
+      // ========================================================
+      // APP BAR
+      // ========================================================
 
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: backgroundColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
@@ -222,52 +281,70 @@ class TaskDetailsScreen extends StatelessWidget {
           onPressed: () {
             Navigator.of(context).pop();
           },
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
             size: 18,
-            color: Color(0xFF0F172A),
+            color: primaryTextColor,
           ),
         ),
 
-        title: const Text(
-          'Task Details',
+        title: Text(
+          l10n.taskDetails,
           style: TextStyle(
             fontSize: 19,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: primaryTextColor,
           ),
         ),
       ),
 
+      // ========================================================
+      // BODY
+      // ========================================================
+
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
+          padding: const EdgeInsets.fromLTRB(
+            20,
+            12,
+            20,
+            30,
+          ),
+
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ==================================================
               // TITLE CARD
               // ==================================================
+
               Container(
                 width: double.infinity,
+
                 padding: const EdgeInsets.all(20),
+
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardColor,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: const Color(0xFFE2E8F0),
+                    color: borderColor,
                     width: 0.7,
                   ),
                 ),
+
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+
                   children: [
                     Container(
                       width: 5,
                       height: 72,
+
                       decoration: BoxDecoration(
                         color: categoryColor,
-                        borderRadius: BorderRadius.circular(5),
+                        borderRadius:
+                            BorderRadius.circular(5),
                       ),
                     ),
 
@@ -275,39 +352,62 @@ class TaskDetailsScreen extends StatelessWidget {
 
                     Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+
                         children: [
                           Text(
                             task.title,
+
                             style: TextStyle(
                               fontSize: 21,
-                              fontWeight: FontWeight.w700,
-                              color: task.isCompleted || task.isOverdue
-                                  ? const Color(0xFF94A3B8)
-                                  : const Color(0xFF0F172A),
-                              decoration: task.isCompleted
-                                  ? TextDecoration.lineThrough
-                                  : TextDecoration.none,
+                              fontWeight:
+                                  FontWeight.w700,
+
+                              color: task.isCompleted ||
+                                      task.isOverdue
+                                  ? (isDark
+                                      ? const Color(
+                                          0xFF64748B,
+                                        )
+                                      : const Color(
+                                          0xFF94A3B8,
+                                        ))
+                                  : primaryTextColor,
+
+                              decoration:
+                                  task.isCompleted
+                                      ? TextDecoration
+                                          .lineThrough
+                                      : TextDecoration.none,
                             ),
                           ),
 
                           const SizedBox(height: 10),
 
                           Container(
-                            padding: const EdgeInsets.symmetric(
+                            padding:
+                                const EdgeInsets.symmetric(
                               horizontal: 10,
                               vertical: 6,
                             ),
-                            decoration: BoxDecoration(
-                              color: categoryColor.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(8),
+
+                            decoration:
+                                BoxDecoration(
+                              color: categoryColor
+                                  .withValues(alpha: 0.08),
+                              borderRadius:
+                                  BorderRadius.circular(8),
                             ),
+
                             child: Text(
                               task.category,
+
                               style: TextStyle(
                                 color: categoryColor,
                                 fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                                fontWeight:
+                                    FontWeight.w700,
                               ),
                             ),
                           ),
@@ -323,7 +423,11 @@ class TaskDetailsScreen extends StatelessWidget {
               // ==================================================
               // STATUS
               // ==================================================
-              _buildSectionLabel('Status'),
+
+              _buildSectionLabel(
+                l10n.status,
+                isDark,
+              ),
 
               const SizedBox(height: 9),
 
@@ -331,10 +435,14 @@ class TaskDetailsScreen extends StatelessWidget {
                 icon: task.isCompleted
                     ? Icons.check_circle_outline_rounded
                     : task.isOverdue
-                    ? Icons.warning_amber_rounded
-                    : Icons.radio_button_unchecked_rounded,
+                        ? Icons.warning_amber_rounded
+                        : Icons.radio_button_unchecked_rounded,
+
                 iconColor: statusColor,
-                title: _statusText(),
+
+                title: _statusText(l10n),
+
+                isDark: isDark,
               ),
 
               const SizedBox(height: 18),
@@ -342,29 +450,38 @@ class TaskDetailsScreen extends StatelessWidget {
               // ==================================================
               // DESCRIPTION
               // ==================================================
-              _buildSectionLabel('Description'),
+
+              _buildSectionLabel(
+                l10n.description,
+                isDark,
+              ),
 
               const SizedBox(height: 9),
 
               Container(
                 width: double.infinity,
+
                 padding: const EdgeInsets.all(16),
+
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
+                  color: cardColor,
+                  borderRadius:
+                      BorderRadius.circular(14),
                   border: Border.all(
-                    color: const Color(0xFFE2E8F0),
+                    color: borderColor,
                     width: 0.7,
                   ),
                 ),
+
                 child: Text(
                   task.description.isEmpty
-                      ? 'No description added.'
+                      ? l10n.noDescriptionAdded
                       : task.description,
-                  style: const TextStyle(
+
+                  style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
-                    color: Color(0xFF475569),
+                    color: secondaryTextColor,
                   ),
                 ),
               ),
@@ -374,7 +491,11 @@ class TaskDetailsScreen extends StatelessWidget {
               // ==================================================
               // DATE
               // ==================================================
-              _buildSectionLabel('Scheduled Date'),
+
+              _buildSectionLabel(
+                l10n.scheduledDate,
+                isDark,
+              ),
 
               const SizedBox(height: 9),
 
@@ -382,6 +503,7 @@ class TaskDetailsScreen extends StatelessWidget {
                 icon: Icons.calendar_today_outlined,
                 iconColor: AppColors.needthis,
                 title: _formatDate(task.scheduledAt),
+                isDark: isDark,
               ),
 
               const SizedBox(height: 12),
@@ -389,10 +511,12 @@ class TaskDetailsScreen extends StatelessWidget {
               // ==================================================
               // TIME
               // ==================================================
+
               _buildInfoCard(
                 icon: Icons.access_time_outlined,
                 iconColor: AppColors.needthis,
                 title: _formatTime(task.scheduledAt),
+                isDark: isDark,
               ),
 
               const SizedBox(height: 28),
@@ -400,24 +524,39 @@ class TaskDetailsScreen extends StatelessWidget {
               // ==================================================
               // EDIT BUTTON
               // ==================================================
+
               SizedBox(
                 width: double.infinity,
                 height: 52,
+
                 child: ElevatedButton.icon(
                   onPressed: () {
                     _editTask(context);
                   },
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: const Text(
-                    'Edit Task',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+
+                  icon: const Icon(
+                    Icons.edit_outlined,
+                    size: 18,
                   ),
+
+                  label: Text(
+                    l10n.editTask,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.needthis,
+                    backgroundColor:
+                        AppColors.needthis,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+
+                    shape:
+                        RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(12),
                     ),
                   ),
                 ),
@@ -428,23 +567,46 @@ class TaskDetailsScreen extends StatelessWidget {
               // ==================================================
               // DELETE BUTTON
               // ==================================================
+
               SizedBox(
                 width: double.infinity,
                 height: 52,
+
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    _showDeleteConfirmation(context);
+                    _showDeleteConfirmation(
+                      context,
+                      l10n,
+                    );
                   },
-                  icon: const Icon(Icons.delete_outline_rounded, size: 19),
-                  label: const Text(
-                    'Delete Task',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    size: 19,
                   ),
+
+                  label: Text(
+                    l10n.deleteTask,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFEF4444),
-                    side: const BorderSide(color: Color(0xFFFECACA)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    foregroundColor:
+                        const Color(0xFFEF4444),
+
+                    side: BorderSide(
+                      color: isDark
+                          ? const Color(0xFF7F1D1D)
+                          : const Color(0xFFFECACA),
+                    ),
+
+                    shape:
+                        RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(12),
                     ),
                   ),
                 ),
@@ -460,13 +622,19 @@ class TaskDetailsScreen extends StatelessWidget {
   // SECTION LABEL
   // ============================================================
 
-  Widget _buildSectionLabel(String text) {
+  Widget _buildSectionLabel(
+    String text,
+    bool isDark,
+  ) {
     return Text(
       text,
-      style: const TextStyle(
+
+      style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w700,
-        color: Color(0xFF0F172A),
+        color: isDark
+            ? const Color(0xFFF8FAFC)
+            : const Color(0xFF0F172A),
       ),
     );
   }
@@ -479,29 +647,51 @@ class TaskDetailsScreen extends StatelessWidget {
     required IconData icon,
     required Color iconColor,
     required String title,
+    required bool isDark,
   }) {
     return Container(
       width: double.infinity,
       height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 0.7),
+
+      padding: const EdgeInsets.symmetric(
+        horizontal: 15,
       ),
+
+      decoration: BoxDecoration(
+        color: isDark
+            ? const Color(0xFF1E293B)
+            : Colors.white,
+
+        borderRadius: BorderRadius.circular(12),
+
+        border: Border.all(
+          color: isDark
+              ? const Color(0xFF334155)
+              : const Color(0xFFE2E8F0),
+          width: 0.7,
+        ),
+      ),
+
       child: Row(
         children: [
-          Icon(icon, size: 19, color: iconColor),
+          Icon(
+            icon,
+            size: 19,
+            color: iconColor,
+          ),
 
           const SizedBox(width: 11),
 
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
+
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF0F172A),
+                color: isDark
+                    ? const Color(0xFFF8FAFC)
+                    : const Color(0xFF0F172A),
               ),
             ),
           ),

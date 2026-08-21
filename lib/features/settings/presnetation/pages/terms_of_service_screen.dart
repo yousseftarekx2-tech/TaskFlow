@@ -1,0 +1,231 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:task_flow/core/routing/routes.dart';
+
+import 'package:task_flow/l10n/app_localizations.dart';
+
+class TermsOfServiceScreen extends StatelessWidget {
+  const TermsOfServiceScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final bool isDark = theme.brightness == Brightness.dark;
+
+    final Color backgroundColor = isDark
+        ? const Color(0xFF0F172A)
+        : const Color(0xFFF8FAFC);
+
+    final Color cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+
+    final Color primaryTextColor = isDark
+        ? const Color(0xFFF8FAFC)
+        : const Color(0xFF0F172A);
+
+    final Color secondaryTextColor = const Color(0xFF94A3B8);
+
+    final Color borderColor = isDark
+        ? const Color(0xFF334155)
+        : const Color(0xFFE2E8F0);
+
+    final Color iconBackgroundColor = isDark
+        ? const Color(0xFF312E81)
+        : const Color(0xFFEEF2FF);
+
+    final Color iconColor = isDark
+        ? const Color(0xFF818CF8)
+        : const Color(0xFF6366F1);
+
+    return Scaffold(
+      backgroundColor: backgroundColor,
+
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+
+        leading: Container(
+          margin: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: cardColor,
+            shape: BoxShape.circle,
+            border: Border.all(color: borderColor, width: 0.8),
+          ),
+          child: IconButton(
+            onPressed: () => context.go(Routes.settings),
+            padding: EdgeInsets.zero,
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: 17,
+              color: primaryTextColor,
+            ),
+          ),
+        ),
+
+        title: Text(
+          l10n.termsOfService,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: primaryTextColor,
+          ),
+        ),
+
+        centerTitle: true,
+      ),
+
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
+
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+
+          children: [
+            _buildSection(
+              icon: Icons.description_outlined,
+              title: l10n.termsIntroduction,
+              description: l10n.termsIntroductionDescription,
+              cardColor: cardColor,
+              borderColor: borderColor,
+              iconBackgroundColor: iconBackgroundColor,
+              iconColor: iconColor,
+              primaryTextColor: primaryTextColor,
+              secondaryTextColor: secondaryTextColor,
+            ),
+
+            const SizedBox(height: 12),
+
+            _buildSection(
+              icon: Icons.person_outline_rounded,
+              title: l10n.termsUserResponsibilities,
+              description: l10n.termsUserResponsibilitiesDescription,
+              cardColor: cardColor,
+              borderColor: borderColor,
+              iconBackgroundColor: iconBackgroundColor,
+              iconColor: iconColor,
+              primaryTextColor: primaryTextColor,
+              secondaryTextColor: secondaryTextColor,
+            ),
+
+            const SizedBox(height: 12),
+
+            _buildSection(
+              icon: Icons.apps_outlined,
+              title: l10n.termsUsingTaskFlow,
+              description: l10n.termsUsingTaskFlowDescription,
+              cardColor: cardColor,
+              borderColor: borderColor,
+              iconBackgroundColor: iconBackgroundColor,
+              iconColor: iconColor,
+              primaryTextColor: primaryTextColor,
+              secondaryTextColor: secondaryTextColor,
+            ),
+
+            const SizedBox(height: 12),
+
+            _buildSection(
+              icon: Icons.update_outlined,
+              title: l10n.termsChanges,
+              description: l10n.termsChangesDescription,
+              cardColor: cardColor,
+              borderColor: borderColor,
+              iconBackgroundColor: iconBackgroundColor,
+              iconColor: iconColor,
+              primaryTextColor: primaryTextColor,
+              secondaryTextColor: secondaryTextColor,
+            ),
+
+            const SizedBox(height: 24),
+
+            Text(
+              l10n.lastUpdated,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: secondaryTextColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // SECTION
+  // ============================================================
+
+  Widget _buildSection({
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color cardColor,
+    required Color borderColor,
+    required Color iconBackgroundColor,
+    required Color iconColor,
+    required Color primaryTextColor,
+    required Color secondaryTextColor,
+  }) {
+    return Container(
+      width: double.infinity,
+
+      padding: const EdgeInsets.all(16),
+
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+
+        border: Border.all(color: borderColor, width: 0.7),
+      ),
+
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+
+                decoration: BoxDecoration(
+                  color: iconBackgroundColor,
+                  borderRadius: BorderRadius.circular(11),
+                ),
+
+                child: Icon(icon, size: 21, color: iconColor),
+              ),
+
+              const SizedBox(width: 12),
+
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: primaryTextColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          Text(
+            description,
+            style: TextStyle(
+              fontSize: 11,
+              height: 1.6,
+              fontWeight: FontWeight.w500,
+              color: secondaryTextColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

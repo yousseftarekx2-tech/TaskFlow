@@ -6,6 +6,8 @@ import 'package:task_flow/features/home/presentation/widgets/task_card.dart';
 import 'package:task_flow/features/tasks/data/model/task_model.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_bloc.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_state.dart';
+import 'package:task_flow/features/settings/presnetation/cubit/settings_cubit.dart';
+import 'package:task_flow/l10n/app_localizations.dart';
 
 class TodayTasksScreen extends StatelessWidget {
   const TodayTasksScreen({super.key});
@@ -32,11 +34,11 @@ class TodayTasksScreen extends StatelessWidget {
     }
   }
 
-  String _formatTime(DateTime dateTime) {
+  String _formatTime(DateTime dateTime, AppLocalizations l10n) {
     final int hour = dateTime.hour;
     final int minute = dateTime.minute;
 
-    final String period = hour >= 12 ? 'PM' : 'AM';
+    final String period = hour >= 12 ? l10n.pm : l10n.am;
 
     final int displayHour = hour % 12 == 0 ? 12 : hour % 12;
 
@@ -45,14 +47,40 @@ class TodayTasksScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<TaskBloc>().state;
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
 
-    final List<TaskModel> tasks = state is TaskLoaded ? state.tasks : [];
+    final taskState = context.watch<TaskBloc>().state;
+
+    final settingsState = context.watch<SettingsCubit>().state;
+
+    final bool isDark = settingsState.darkModeEnabled;
+
+    final List<TaskModel> tasks = taskState is TaskLoaded
+        ? taskState.tasks
+        : [];
 
     final DateTime today = DateTime.now();
 
-    // See All بتاعة النهارده:
-    // نعرض pending + completed + overdue.
+    // ------------------------------------------------------------
+    // THEME COLORS
+    // ------------------------------------------------------------
+
+    final Color backgroundColor = isDark
+        ? const Color(0xFF0F172A)
+        : const Color(0xFFF8FAFC);
+
+    final Color primaryTextColor = isDark
+        ? const Color(0xFFF8FAFC)
+        : const Color(0xFF0F172A);
+
+    final Color mutedTextColor = isDark
+        ? const Color(0xFF64748B)
+        : const Color(0xFF94A3B8);
+
+    // ------------------------------------------------------------
+    // TODAY'S TASKS
+    // ------------------------------------------------------------
+
     final List<TaskModel> todayTasks = tasks.where((task) {
       return task.scheduledAt.year == today.year &&
           task.scheduledAt.month == today.month &&
@@ -62,36 +90,46 @@ class TodayTasksScreen extends StatelessWidget {
     todayTasks.sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: backgroundColor,
+
+      // ------------------------------------------------------------
+      // APP BAR
+      // ------------------------------------------------------------
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: backgroundColor,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
+
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
             size: 20,
-            color: Color(0xFF0F172A),
+            color: primaryTextColor,
           ),
         ),
-        title: const Text(
-          "Today's Tasks",
+
+        title: Text(
+          l10n.todaysTasks,
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF0F172A),
+            color: primaryTextColor,
           ),
         ),
       ),
+
+      // ------------------------------------------------------------
+      // BODY
+      // ------------------------------------------------------------
       body: todayTasks.isEmpty
-          ? const Center(
+          ? Center(
               child: Text(
-                'No tasks for today',
+                l10n.noTasksForToday,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF94A3B8),
+                  color: mutedTextColor,
                 ),
               ),
             )
@@ -107,7 +145,7 @@ class TodayTasksScreen extends StatelessWidget {
                     title: task.title,
                     category: task.category,
                     taskId: task.id,
-                    time: _formatTime(task.scheduledAt),
+                    time: _formatTime(task.scheduledAt, l10n),
                     color: _categoryColor(task.category),
                     completed: task.isCompleted,
                     overdue: task.isOverdue,

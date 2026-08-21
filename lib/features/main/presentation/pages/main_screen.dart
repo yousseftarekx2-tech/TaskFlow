@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import 'package:task_flow/core/routing/routes.dart';
 import 'package:task_flow/features/calendar/presentation/pages/calendar_screen.dart';
 import 'package:task_flow/features/focus/presentation/pages/focus_screen.dart';
-
 import 'package:task_flow/features/home/presentation/pages/home_screen.dart';
 import 'package:task_flow/features/home/presentation/widgets/home_bottom_navigation.dart';
 import 'package:task_flow/features/statistics/presentation/pages/stats_screen.dart';
@@ -18,25 +18,39 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int currentIndex = 0;
 
+  Widget _buildCurrentScreen() {
+    switch (currentIndex) {
+      case 0:
+        return const HomeScreen();
+
+      case 1:
+        return const CalenderScreen();
+
+      case 2:
+        return const StatsScreen();
+
+      case 3:
+        return const FocusScreen();
+
+      default:
+        return const HomeScreen();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: currentIndex,
-        children: const [
-          HomeScreen(),
-          CalenderScreen(),
-          StatsScreen(),
-          FocusScreen(),
-        ],
-      ),
+      body: _buildCurrentScreen(),
+
       bottomNavigationBar: HomeBottomNavigation(
         currentIndex: currentIndex,
+
         onTap: (index) {
           setState(() {
             currentIndex = index;
           });
         },
+
         onAddTap: () {
           context.push(Routes.task);
         },

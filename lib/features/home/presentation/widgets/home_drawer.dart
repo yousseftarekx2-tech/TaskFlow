@@ -1,35 +1,83 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+
 import 'package:task_flow/core/constants/app_colors.dart';
 import 'package:task_flow/core/routing/routes.dart';
+import 'package:task_flow/features/auth/data/model/user_model.dart';
+import 'package:task_flow/features/auth/presentation/cubit/user_cubit.dart';
+import 'package:task_flow/features/settings/presnetation/cubit/settings_cubit.dart';
+import 'package:task_flow/l10n/app_localizations.dart';
 
 class HomeDrawer extends StatelessWidget {
-  const HomeDrawer({super.key});
+  HomeDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
+    final user = context.watch<UserCubit>().state;
+    final settings = context.watch<SettingsCubit>().state;
+
+    final bool isDark = settings.darkModeEnabled;
+
+    final Color backgroundColor = isDark
+        ? const Color(0xFF0F172A)
+        : const Color(0xFFF8FAFC);
+
+    final Color surfaceColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+
+    final Color primaryTextColor = isDark
+        ? const Color(0xFFF8FAFC)
+        : const Color(0xFF334155);
+
+    final Color iconColor = isDark
+        ? const Color(0xFFCBD5E1)
+        : const Color(0xFF64748B);
+
+    final Color borderColor = isDark
+        ? const Color(0xFF334155)
+        : const Color(0xFFE2E8F0);
+
+    final Color mutedColor = isDark
+        ? const Color(0xFF64748B)
+        : const Color(0xFF94A3B8);
+
     return Drawer(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: backgroundColor,
       width: MediaQuery.of(context).size.width * 0.82,
+
       child: SafeArea(
         child: Column(
           children: [
-            _buildProfileHeader(context),
+            _buildProfileHeader(
+              context,
+              user,
+              isDark,
+              surfaceColor,
+              borderColor,
+              primaryTextColor,
+              mutedColor,
+              l10n,
+            ),
 
             const SizedBox(height: 18),
 
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
+
                 child: Column(
                   children: [
-                    _buildSectionTitle('Main'),
+                    _buildSectionTitle(l10n.main, mutedColor),
 
-                    // Home
                     _buildDrawerItem(
                       context,
                       icon: Icons.home_outlined,
-                      title: 'Home',
+                      title: l10n.home,
+                      iconColor: iconColor,
+                      textColor: primaryTextColor,
+                      arrowColor: mutedColor,
                       onTap: () {
                         Navigator.pop(context);
 
@@ -39,33 +87,39 @@ class HomeDrawer extends StatelessWidget {
                       },
                     ),
 
-                    // Calendar
                     _buildDrawerItem(
                       context,
                       icon: Icons.calendar_month_outlined,
-                      title: 'Calendar',
+                      title: l10n.calendar,
+                      iconColor: iconColor,
+                      textColor: primaryTextColor,
+                      arrowColor: mutedColor,
                       onTap: () {
                         Navigator.pop(context);
                         context.push(Routes.calendar);
                       },
                     ),
 
-                    // Focus
                     _buildDrawerItem(
                       context,
                       icon: Icons.center_focus_strong_outlined,
-                      title: 'Focus',
+                      title: l10n.focus,
+                      iconColor: iconColor,
+                      textColor: primaryTextColor,
+                      arrowColor: mutedColor,
                       onTap: () {
                         Navigator.pop(context);
                         context.push(Routes.focus);
                       },
                     ),
 
-                    // Statistics
                     _buildDrawerItem(
                       context,
                       icon: Icons.bar_chart_outlined,
-                      title: 'Statistics',
+                      title: l10n.statistics,
+                      iconColor: iconColor,
+                      textColor: primaryTextColor,
+                      arrowColor: mutedColor,
                       onTap: () {
                         Navigator.pop(context);
                         context.push(Routes.state);
@@ -74,34 +128,41 @@ class HomeDrawer extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    _buildSectionTitle('Tasks'),
+                    _buildSectionTitle(l10n.tasks, mutedColor),
 
-                    // All Tasks - later
                     _buildDrawerItem(
                       context,
                       icon: Icons.task_alt_outlined,
-                      title: 'All Tasks',
+                      title: l10n.allTasks,
+                      iconColor: iconColor,
+                      textColor: primaryTextColor,
+                      arrowColor: mutedColor,
                       onTap: () {
                         Navigator.pop(context);
                         context.push(Routes.allTasks);
                       },
                     ),
-                    // Completed Tasks - later
+
                     _buildDrawerItem(
                       context,
                       icon: Icons.check_circle_outline,
-                      title: 'Completed Tasks',
+                      title: l10n.completedTasks,
+                      iconColor: iconColor,
+                      textColor: primaryTextColor,
+                      arrowColor: mutedColor,
                       onTap: () {
                         Navigator.pop(context);
                         context.push(Routes.completedTasks);
                       },
                     ),
 
-                    // Categories - later
                     _buildDrawerItem(
                       context,
                       icon: Icons.category_outlined,
-                      title: 'Categories',
+                      title: l10n.categories,
+                      iconColor: iconColor,
+                      textColor: primaryTextColor,
+                      arrowColor: mutedColor,
                       onTap: () {
                         Navigator.pop(context);
                         context.push(Routes.category);
@@ -110,127 +171,150 @@ class HomeDrawer extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    _buildSectionTitle('App'),
-                    // Notifications
+                    _buildSectionTitle(l10n.application, mutedColor),
+
                     _buildDrawerItem(
                       context,
                       icon: Icons.notifications_none_rounded,
-                      title: 'Notifications',
+                      title: l10n.notifications,
+                      iconColor: iconColor,
+                      textColor: primaryTextColor,
+                      arrowColor: mutedColor,
                       onTap: () {
                         Navigator.pop(context);
                         context.push(Routes.notifications);
                       },
                     ),
 
-                    // Settings
                     _buildDrawerItem(
                       context,
                       icon: Icons.settings_outlined,
-                      title: 'Settings',
+                      title: l10n.settings,
+                      iconColor: iconColor,
+                      textColor: primaryTextColor,
+                      arrowColor: mutedColor,
                       onTap: () {
                         Navigator.pop(context);
                         context.push(Routes.settings);
                       },
                     ),
-
-                    const SizedBox(height: 20),
-
-                    _buildSectionTitle('Other'),
-
-                    // About - later
-                    _buildDrawerItem(
-                      context,
-                      icon: Icons.info_outline,
-                      title: 'About',
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.push(Routes.about);
-                      },
-                    ),
-
-                    const SizedBox(height: 24),
                   ],
                 ),
               ),
             ),
 
-            _buildDrawerFooter(),
+            // ------------------------------------------------------------
+            // LOGOUT
+            // ------------------------------------------------------------
+            _buildLogoutItem(context, isDark, l10n),
+
+            // ------------------------------------------------------------
+            // FOOTER
+            // ------------------------------------------------------------
+            _buildDrawerFooter(
+              isDark,
+              surfaceColor,
+              borderColor,
+              mutedColor,
+              l10n,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildProfileHeader(BuildContext context) {
+  Widget _buildProfileHeader(
+    BuildContext context,
+    UserModel? user,
+    bool isDark,
+    Color surfaceColor,
+    Color borderColor,
+    Color primaryTextColor,
+    Color mutedColor,
+    AppLocalizations l10n,
+  ) {
     return Material(
-      color: Colors.white,
+      color: surfaceColor,
+
       child: InkWell(
         onTap: () {
           Navigator.pop(context);
           context.push(Routes.profile);
         },
+
         child: Container(
           width: double.infinity,
+
           padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(color: Color(0xFFE2E8F0), width: 0.7),
-            ),
+
+          decoration: BoxDecoration(
+            color: surfaceColor,
+
+            border: Border(bottom: BorderSide(color: borderColor, width: 0.7)),
           ),
+
           child: Row(
             children: [
               Container(
                 width: 58,
                 height: 58,
+
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFEEF2FF),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  color: isDark
+                      ? const Color(0xFF312E81)
+                      : const Color(0xFFEEF2FF),
+
+                  border: Border.all(color: borderColor),
                 ),
-                child: const Icon(
-                  Icons.person_outline_rounded,
-                  size: 30,
-                  color: Color(0xFF64748B),
+
+                child: CircleAvatar(
+                  backgroundColor: Colors.transparent,
+
+                  backgroundImage: user?.photoUrl != null
+                      ? NetworkImage(user!.photoUrl!)
+                      : null,
+
+                  child: user?.photoUrl == null
+                      ? Icon(Icons.person, color: mutedColor)
+                      : null,
                 ),
               ),
 
               const SizedBox(width: 14),
 
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+
                   children: [
                     Text(
-                      'Youssef',
+                      user?.name ?? l10n.user,
+
                       style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: primaryTextColor,
                       ),
                     ),
 
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
 
                     Text(
-                      'youssef@example.com',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      user?.email ?? '',
+
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF94A3B8),
+                        color: mutedColor,
                       ),
                     ),
                   ],
                 ),
               ),
 
-              const Icon(
-                Icons.chevron_right_rounded,
-                size: 20,
-                color: Color(0xFFCBD5E1),
-              ),
+              Icon(Icons.chevron_right_rounded, size: 20, color: mutedColor),
             ],
           ),
         ),
@@ -238,18 +322,21 @@ class HomeDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, Color color) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+
       child: Align(
         alignment: Alignment.centerLeft,
+
         child: Text(
           title.toUpperCase(),
-          style: const TextStyle(
+
+          style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.8,
-            color: Color(0xFF94A3B8),
+            color: color,
           ),
         ),
       ),
@@ -260,40 +347,106 @@ class HomeDrawer extends StatelessWidget {
     BuildContext context, {
     required IconData icon,
     required String title,
+    required Color iconColor,
+    required Color textColor,
+    required Color arrowColor,
     required VoidCallback onTap,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
+
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(12),
+
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
+
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
+
             child: Row(
               children: [
-                Icon(icon, size: 21, color: const Color(0xFF64748B)),
+                Icon(icon, size: 21, color: iconColor),
 
                 const SizedBox(width: 14),
 
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(
+
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF334155),
+                      color: textColor,
                     ),
                   ),
                 ),
 
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  size: 18,
-                  color: Color(0xFFCBD5E1),
+                Icon(Icons.chevron_right_rounded, size: 18, color: arrowColor),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLogoutItem(
+    BuildContext context,
+    bool isDark,
+    AppLocalizations l10n,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+
+        child: InkWell(
+          onTap: () async {
+            Navigator.pop(context);
+
+            await context.read<UserCubit>().logout();
+
+            if (!context.mounted) return;
+
+            context.go(Routes.login);
+          },
+
+          borderRadius: BorderRadius.circular(12),
+
+          child: Container(
+            width: double.infinity,
+
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: isDark ? 0.12 : 0.06),
+
+              borderRadius: BorderRadius.circular(12),
+            ),
+
+            child: Row(
+              children: [
+                const Icon(Icons.logout_rounded, size: 21, color: Colors.red),
+
+                const SizedBox(width: 14),
+
+                Expanded(
+                  child: Text(
+                    l10n.logout,
+
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.red,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -303,19 +456,30 @@ class HomeDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawerFooter() {
+  Widget _buildDrawerFooter(
+    bool isDark,
+    Color surfaceColor,
+    Color borderColor,
+    Color mutedColor,
+    AppLocalizations l10n,
+  ) {
     return Container(
       width: double.infinity,
+
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE2E8F0), width: 0.7)),
+
+      decoration: BoxDecoration(
+        color: surfaceColor,
+
+        border: Border(top: BorderSide(color: borderColor, width: 0.7)),
       ),
+
       child: Row(
         children: [
           Container(
             width: 8,
             height: 8,
+
             decoration: BoxDecoration(
               color: AppColors.needthis,
               shape: BoxShape.circle,
@@ -324,23 +488,25 @@ class HomeDrawer extends StatelessWidget {
 
           const SizedBox(width: 8),
 
-          const Text(
-            'TaskFlow',
+          Text(
+            l10n.taskFlow,
+
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF94A3B8),
+              color: mutedColor,
             ),
           ),
 
           const Spacer(),
 
-          const Text(
+          Text(
             'v1.0.0',
+
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: Color(0xFFCBD5E1),
+              color: mutedColor.withValues(alpha: 0.7),
             ),
           ),
         ],

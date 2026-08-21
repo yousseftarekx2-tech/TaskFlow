@@ -2,8 +2,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:task_flow/l10n/app_localizations.dart';
 
 import 'package:task_flow/core/constants/app_colors.dart';
+import 'package:task_flow/features/settings/presnetation/cubit/settings_cubit.dart';
 import 'package:task_flow/features/tasks/data/model/task_model.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_bloc.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_state.dart';
@@ -26,10 +28,15 @@ class _StatsScreenState extends State<StatsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<TaskBloc>().state;
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
 
-    final List<TaskModel> allTasks = state is TaskLoaded
-        ? state.tasks
+    final settingsState = context.watch<SettingsCubit>().state;
+    final bool isDarkMode = settingsState.darkModeEnabled;
+
+    final taskState = context.watch<TaskBloc>().state;
+
+    final List<TaskModel> allTasks = taskState is TaskLoaded
+        ? taskState.tasks
         : <TaskModel>[];
 
     final List<TaskModel> filteredTasks = _filterTasks(allTasks);
@@ -52,19 +59,23 @@ class _StatsScreenState extends State<StatsScreen> {
         ? 0
         : completedTasks / totalTasks;
 
+    final int currentStreak = _calculateCurrentStreak(allTasks);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: isDarkMode
+          ? const Color(0xFF0F172A)
+          : const Color(0xFFF8FAFC),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(),
+              _buildHeader(isDarkMode, l10n),
 
               const SizedBox(height: 18),
 
-              _buildPeriodSelector(),
+              _buildPeriodSelector(isDarkMode, l10n),
 
               const SizedBox(height: 18),
 
@@ -73,6 +84,8 @@ class _StatsScreenState extends State<StatsScreen> {
                 completedTasks: completedTasks,
                 pendingTasks: pendingTasks,
                 overdueTasks: overdueTasks,
+                isDarkMode: isDarkMode,
+                l10n: l10n,
               ),
 
               const SizedBox(height: 18),
@@ -82,19 +95,27 @@ class _StatsScreenState extends State<StatsScreen> {
                 completedTasks: completedTasks,
                 pendingTasks: pendingTasks,
                 overdueTasks: overdueTasks,
+                isDarkMode: isDarkMode,
+                l10n: l10n,
               ),
 
               const SizedBox(height: 18),
 
-              _buildWeeklyProductivity(allTasks),
+              _buildWeeklyProductivity(allTasks, isDarkMode, l10n),
 
               const SizedBox(height: 18),
 
-              _buildCategories(filteredTasks),
+              _buildCategories(filteredTasks, isDarkMode, l10n),
 
               const SizedBox(height: 18),
 
-              _buildInsights(filteredTasks, completionRate),
+              _buildInsights(
+                filteredTasks,
+                completionRate,
+                currentStreak,
+                isDarkMode,
+                l10n,
+              ),
             ],
           ),
         ),
@@ -106,22 +127,22 @@ class _StatsScreenState extends State<StatsScreen> {
   // HEADER
   // ============================================================
 
-  Widget _buildHeader() {
-    return const Column(
+  Widget _buildHeader(bool isDarkMode, AppLocalizations l10n) {
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Statistics',
+          l10n.statistics,
           style: TextStyle(
             fontSize: 25,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF0F172A),
+            color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
           ),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
-          'Track your productivity',
-          style: TextStyle(
+          l10n.trackYourProductivity,
+          style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: Color(0xFF94A3B8),
@@ -135,19 +156,35 @@ class _StatsScreenState extends State<StatsScreen> {
   // PERIOD SELECTOR
   // ============================================================
 
-  Widget _buildPeriodSelector() {
+  Widget _buildPeriodSelector(bool isDarkMode, AppLocalizations l10n) {
     return Row(
       children: [
-        _periodButton(title: 'Week', period: StatsPeriod.week),
+        _periodButton(
+          title: l10n.week,
+          period: StatsPeriod.week,
+          isDarkMode: isDarkMode,
+        ),
         const SizedBox(width: 8),
-        _periodButton(title: 'Month', period: StatsPeriod.month),
+        _periodButton(
+          title: l10n.month,
+          period: StatsPeriod.month,
+          isDarkMode: isDarkMode,
+        ),
         const SizedBox(width: 8),
-        _periodButton(title: 'Year', period: StatsPeriod.year),
+        _periodButton(
+          title: l10n.year,
+          period: StatsPeriod.year,
+          isDarkMode: isDarkMode,
+        ),
       ],
     );
   }
 
-  Widget _periodButton({required String title, required StatsPeriod period}) {
+  Widget _periodButton({
+    required String title,
+    required StatsPeriod period,
+    required bool isDarkMode,
+  }) {
     final bool selected = _selectedPeriod == period;
 
     return GestureDetector(
@@ -160,10 +197,18 @@ class _StatsScreenState extends State<StatsScreen> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? AppColors.needthis : Colors.white,
+          color: selected
+              ? AppColors.needthis
+              : isDarkMode
+              ? const Color(0xFF1E293B)
+              : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.needthis : const Color(0xFFE2E8F0),
+            color: selected
+                ? AppColors.needthis
+                : isDarkMode
+                ? const Color(0xFF334155)
+                : const Color(0xFFE2E8F0),
           ),
         ),
         child: Text(
@@ -171,7 +216,11 @@ class _StatsScreenState extends State<StatsScreen> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w700,
-            color: selected ? Colors.white : const Color(0xFF64748B),
+            color: selected
+                ? Colors.white
+                : isDarkMode
+                ? const Color(0xFFCBD5E1)
+                : const Color(0xFF64748B),
           ),
         ),
       ),
@@ -179,7 +228,7 @@ class _StatsScreenState extends State<StatsScreen> {
   }
 
   // ============================================================
-  // SUMMARY CARDS
+  // SUMMARY
   // ============================================================
 
   Widget _buildSummaryGrid({
@@ -187,6 +236,8 @@ class _StatsScreenState extends State<StatsScreen> {
     required int completedTasks,
     required int pendingTasks,
     required int overdueTasks,
+    required bool isDarkMode,
+    required AppLocalizations l10n,
   }) {
     return GridView.count(
       shrinkWrap: true,
@@ -197,28 +248,32 @@ class _StatsScreenState extends State<StatsScreen> {
       childAspectRatio: 1.7,
       children: [
         _summaryCard(
-          title: 'Total Tasks',
+          title: l10n.totalTasks,
           value: totalTasks,
           icon: Icons.checklist_rounded,
           iconColor: AppColors.needthis,
+          isDarkMode: isDarkMode,
         ),
         _summaryCard(
-          title: 'Completed',
+          title: l10n.completed,
           value: completedTasks,
           icon: Icons.check_circle_outline_rounded,
           iconColor: _completedColor,
+          isDarkMode: isDarkMode,
         ),
         _summaryCard(
-          title: 'Pending',
+          title: l10n.pending,
           value: pendingTasks,
           icon: Icons.schedule_rounded,
           iconColor: _pendingColor,
+          isDarkMode: isDarkMode,
         ),
         _summaryCard(
-          title: 'Overdue',
+          title: l10n.overdue,
           value: overdueTasks,
           icon: Icons.warning_amber_rounded,
           iconColor: _overdueColor,
+          isDarkMode: isDarkMode,
         ),
       ],
     );
@@ -229,13 +284,17 @@ class _StatsScreenState extends State<StatsScreen> {
     required int value,
     required IconData icon,
     required Color iconColor,
+    required bool isDarkMode,
   }) {
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 0.8,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,10 +303,10 @@ class _StatsScreenState extends State<StatsScreen> {
           const Spacer(),
           Text(
             '$value',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w900,
-              color: Color(0xFF1E293B),
+              color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
             ),
           ),
           const SizedBox(height: 1),
@@ -273,6 +332,8 @@ class _StatsScreenState extends State<StatsScreen> {
     required int completedTasks,
     required int pendingTasks,
     required int overdueTasks,
+    required bool isDarkMode,
+    required AppLocalizations l10n,
   }) {
     final double completionRate = totalTasks == 0
         ? 0
@@ -281,7 +342,8 @@ class _StatsScreenState extends State<StatsScreen> {
     final int percentage = (completionRate * 100).round();
 
     return _sectionCard(
-      title: 'Completion Overview',
+      title: l10n.completionOverview,
+      isDarkMode: isDarkMode,
       child: Center(
         child: Column(
           children: [
@@ -299,24 +361,29 @@ class _StatsScreenState extends State<StatsScreen> {
                       completed: completedTasks,
                       pending: pendingTasks,
                       overdue: overdueTasks,
-                      backgroundColor: const Color(0xFFE2E8F0),
+                      backgroundColor: isDarkMode
+                          ? const Color(0xFF334155)
+                          : const Color(0xFFE2E8F0),
                     ),
                   ),
+
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         '$percentage%',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF1E293B),
+                          color: isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF1E293B),
                         ),
                       ),
                       const SizedBox(height: 2),
-                      const Text(
-                        'Completed',
-                        style: TextStyle(
+                      Text(
+                        l10n.completed,
+                        style: const TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF94A3B8),
@@ -337,21 +404,24 @@ class _StatsScreenState extends State<StatsScreen> {
               children: [
                 _legendItem(
                   color: _completedColor,
-                  title: 'Completed',
+                  title: l10n.completed,
                   value: completedTasks,
                   total: totalTasks,
+                  isDarkMode: isDarkMode,
                 ),
                 _legendItem(
                   color: _pendingColor,
-                  title: 'Pending',
+                  title: l10n.pending,
                   value: pendingTasks,
                   total: totalTasks,
+                  isDarkMode: isDarkMode,
                 ),
                 _legendItem(
                   color: _overdueColor,
-                  title: 'Overdue',
+                  title: l10n.overdue,
                   value: overdueTasks,
                   total: totalTasks,
+                  isDarkMode: isDarkMode,
                 ),
               ],
             ),
@@ -366,6 +436,7 @@ class _StatsScreenState extends State<StatsScreen> {
     required String title,
     required int value,
     required int total,
+    required bool isDarkMode,
   }) {
     final int percentage = total == 0 ? 0 : ((value / total) * 100).round();
 
@@ -380,10 +451,12 @@ class _StatsScreenState extends State<StatsScreen> {
         const SizedBox(width: 5),
         Text(
           '$title $percentage%',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF64748B),
+            color: isDarkMode
+                ? const Color(0xFFCBD5E1)
+                : const Color(0xFF64748B),
           ),
         ),
       ],
@@ -392,17 +465,34 @@ class _StatsScreenState extends State<StatsScreen> {
 
   // ============================================================
   // WEEKLY PRODUCTIVITY
+  // SATURDAY -> FRIDAY
   // ============================================================
 
-  Widget _buildWeeklyProductivity(List<TaskModel> allTasks) {
+  Widget _buildWeeklyProductivity(
+    List<TaskModel> allTasks,
+    bool isDarkMode,
+    AppLocalizations l10n,
+  ) {
     final DateTime now = DateTime.now();
 
-    final List<String> days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final DateTime startOfWeek = _getStartOfWeek(now);
+
+    final List<String> days = [
+      l10n.sat,
+      l10n.sun,
+      l10n.mon,
+      l10n.tue,
+      l10n.wed,
+      l10n.thu,
+      l10n.fri,
+    ];
 
     final List<int> counts = List.generate(7, (index) {
-      final DateTime day = now.subtract(
-        Duration(days: now.weekday - 1 - index),
-      );
+      final DateTime day = DateTime(
+        startOfWeek.year,
+        startOfWeek.month,
+        startOfWeek.day,
+      ).add(Duration(days: index));
 
       return allTasks.where((task) {
         return task.scheduledAt.year == day.year &&
@@ -417,12 +507,12 @@ class _StatsScreenState extends State<StatsScreen> {
         : counts.reduce((a, b) => a > b ? a : b);
 
     return _sectionCard(
-      title: 'Weekly Productivity',
-      subtitle: 'Tasks completed per day',
+      title: l10n.weeklyProductivity,
+      subtitle: l10n.tasksCompletedPerDay,
+      isDarkMode: isDarkMode,
       child: Column(
         children: [
           const SizedBox(height: 18),
-
           SizedBox(
             height: 145,
             child: Row(
@@ -436,10 +526,12 @@ class _StatsScreenState extends State<StatsScreen> {
                     children: [
                       Text(
                         '$value',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF475569),
+                          color: isDarkMode
+                              ? const Color(0xFFCBD5E1)
+                              : const Color(0xFF475569),
                         ),
                       ),
                       const SizedBox(height: 5),
@@ -476,7 +568,11 @@ class _StatsScreenState extends State<StatsScreen> {
   // CATEGORIES
   // ============================================================
 
-  Widget _buildCategories(List<TaskModel> tasks) {
+  Widget _buildCategories(
+    List<TaskModel> tasks,
+    bool isDarkMode,
+    AppLocalizations l10n,
+  ) {
     final Map<String, int> categoryCounts = {};
 
     for (final task in tasks) {
@@ -490,15 +586,18 @@ class _StatsScreenState extends State<StatsScreen> {
 
     if (categories.isEmpty) {
       return _sectionCard(
-        title: 'Categories',
-        child: const Padding(
-          padding: EdgeInsets.symmetric(vertical: 12),
+        title: l10n.categories,
+        isDarkMode: isDarkMode,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
           child: Text(
-            'No category data available',
+            l10n.noCategoryDataAvailable,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF94A3B8),
+              color: isDarkMode
+                  ? const Color(0xFF64748B)
+                  : const Color(0xFF94A3B8),
             ),
           ),
         ),
@@ -506,7 +605,8 @@ class _StatsScreenState extends State<StatsScreen> {
     }
 
     return _sectionCard(
-      title: 'Categories',
+      title: l10n.categories,
+      isDarkMode: isDarkMode,
       child: Column(
         children: categories.take(5).map((entry) {
           final Color color = _categoryColor(entry.key);
@@ -516,7 +616,7 @@ class _StatsScreenState extends State<StatsScreen> {
           final double progress = maxCount == 0 ? 0 : entry.value / maxCount;
 
           return Padding(
-            padding: const EdgeInsets.only(bottom: 13),
+            padding: const EdgeInsets.only(bottom: 8, top: 10),
             child: Row(
               children: [
                 Container(
@@ -527,38 +627,50 @@ class _StatsScreenState extends State<StatsScreen> {
                     shape: BoxShape.circle,
                   ),
                 ),
+
                 const SizedBox(width: 8),
+
                 SizedBox(
                   width: 72,
                   child: Text(
                     entry.key,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 10,
+                    style: TextStyle(
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF334155),
+                      color: isDarkMode
+                          ? const Color(0xFFCBD5E1)
+                          : const Color(0xFF334155),
                     ),
                   ),
                 ),
+
                 const SizedBox(width: 8),
+
                 Expanded(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: LinearProgressIndicator(
                       value: progress,
                       minHeight: 4,
-                      backgroundColor: const Color(0xFFE2E8F0),
+                      backgroundColor: isDarkMode
+                          ? const Color(0xFF334155)
+                          : const Color(0xFFE2E8F0),
                       color: color,
                     ),
                   ),
                 ),
+
                 const SizedBox(width: 8),
+
                 Text(
-                  '${entry.value} tasks',
-                  style: const TextStyle(
+                  '${entry.value} ${l10n.tasks}',
+                  style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF64748B),
+                    color: isDarkMode
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF64748B),
                   ),
                 ),
               ],
@@ -573,7 +685,13 @@ class _StatsScreenState extends State<StatsScreen> {
   // INSIGHTS
   // ============================================================
 
-  Widget _buildInsights(List<TaskModel> tasks, double completionRate) {
+  Widget _buildInsights(
+    List<TaskModel> tasks,
+    double completionRate,
+    int currentStreak,
+    bool isDarkMode,
+    AppLocalizations l10n,
+  ) {
     String mostProductiveDay = '—';
     String topCategory = '—';
 
@@ -581,6 +699,8 @@ class _StatsScreenState extends State<StatsScreen> {
       final Map<int, int> dayCounts = {};
 
       for (final task in tasks) {
+        if (!task.isCompleted) continue;
+
         final int weekday = task.scheduledAt.weekday;
 
         dayCounts[weekday] = (dayCounts[weekday] ?? 0) + 1;
@@ -591,7 +711,7 @@ class _StatsScreenState extends State<StatsScreen> {
             .reduce((a, b) => a.value >= b.value ? a : b)
             .key;
 
-        mostProductiveDay = _weekdayName(bestDay);
+        mostProductiveDay = _weekdayName(bestDay, l10n);
       }
 
       final Map<String, int> categories = {};
@@ -608,7 +728,8 @@ class _StatsScreenState extends State<StatsScreen> {
     }
 
     return _sectionCard(
-      title: 'Insights',
+      title: l10n.insights,
+      isDarkMode: isDarkMode,
       child: GridView.count(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -619,27 +740,34 @@ class _StatsScreenState extends State<StatsScreen> {
         children: [
           _insightItem(
             icon: Icons.emoji_events_outlined,
-            title: 'Most Productive',
+            title: l10n.mostProductive,
             value: mostProductiveDay,
             color: const Color(0xFFF59E0B),
+            isDarkMode: isDarkMode,
           ),
+
           _insightItem(
             icon: Icons.category_outlined,
-            title: 'Top Category',
+            title: l10n.topCategory,
             value: topCategory,
             color: AppColors.needthis,
+            isDarkMode: isDarkMode,
           ),
+
           _insightItem(
             icon: Icons.check_circle_outline_rounded,
-            title: 'Completion',
+            title: l10n.completion,
             value: '${(completionRate * 100).round()}%',
             color: _completedColor,
+            isDarkMode: isDarkMode,
           ),
+
           _insightItem(
             icon: Icons.local_fire_department_outlined,
-            title: 'Current Streak',
-            value: '—',
+            title: l10n.currentStreak,
+            value: '$currentStreak ${l10n.days}',
             color: _pendingColor,
+            isDarkMode: isDarkMode,
           ),
         ],
       ),
@@ -651,17 +779,20 @@ class _StatsScreenState extends State<StatsScreen> {
     required String title,
     required String value,
     required Color color,
+    required bool isDarkMode,
   }) {
     return Container(
       padding: const EdgeInsets.all(9),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: color),
+          Icon(icon, size: 23, color: color),
+
           const SizedBox(width: 7),
+
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -672,20 +803,22 @@ class _StatsScreenState extends State<StatsScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF94A3B8),
                   ),
                 ),
+
                 const SizedBox(height: 2),
+
                 Text(
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 10,
+                  style: TextStyle(
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF334155),
+                    color: isDarkMode ? Colors.white : const Color(0xFF334155),
                   ),
                 ),
               ],
@@ -704,28 +837,34 @@ class _StatsScreenState extends State<StatsScreen> {
     required String title,
     String? subtitle,
     required Widget child,
+    required bool isDarkMode,
   }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 0.8,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 15,
+            style: TextStyle(
+              fontSize: 17,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
+              color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
             ),
           ),
+
           if (subtitle != null) ...[
             const SizedBox(height: 2),
+
             Text(
               subtitle,
               style: const TextStyle(
@@ -735,6 +874,7 @@ class _StatsScreenState extends State<StatsScreen> {
               ),
             ),
           ],
+
           child,
         ],
       ),
@@ -750,15 +890,7 @@ class _StatsScreenState extends State<StatsScreen> {
 
     switch (_selectedPeriod) {
       case StatsPeriod.week:
-        final DateTime startOfWeek = now.subtract(
-          Duration(days: now.weekday - 1),
-        );
-
-        final DateTime start = DateTime(
-          startOfWeek.year,
-          startOfWeek.month,
-          startOfWeek.day,
-        );
+        final DateTime start = _getStartOfWeek(now);
 
         final DateTime end = start.add(const Duration(days: 7));
 
@@ -781,22 +913,106 @@ class _StatsScreenState extends State<StatsScreen> {
   }
 
   // ============================================================
-  // HELPERS
+  // WEEK START = SATURDAY
   // ============================================================
 
-  String _weekdayName(int weekday) {
-    const List<String> names = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ];
+  DateTime _getStartOfWeek(DateTime date) {
+    final DateTime today = DateTime(date.year, date.month, date.day);
 
-    return names[weekday - 1];
+    final int daysSinceSaturday = (today.weekday - DateTime.saturday) % 7;
+
+    return today.subtract(Duration(days: daysSinceSaturday));
   }
+
+  // ============================================================
+  // CURRENT STREAK
+  // ============================================================
+
+  int _calculateCurrentStreak(List<TaskModel> tasks) {
+    final Set<DateTime> completedDays = {};
+
+    for (final task in tasks) {
+      if (!task.isCompleted) continue;
+
+      final DateTime day = DateTime(
+        task.scheduledAt.year,
+        task.scheduledAt.month,
+        task.scheduledAt.day,
+      );
+
+      completedDays.add(day);
+    }
+
+    if (completedDays.isEmpty) {
+      return 0;
+    }
+
+    final DateTime today = DateTime(
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day,
+    );
+
+    DateTime currentDay;
+
+    if (completedDays.contains(today)) {
+      currentDay = today;
+    } else {
+      final DateTime yesterday = today.subtract(const Duration(days: 1));
+
+      if (!completedDays.contains(yesterday)) {
+        return 0;
+      }
+
+      currentDay = yesterday;
+    }
+
+    int streak = 0;
+
+    while (completedDays.contains(currentDay)) {
+      streak++;
+
+      currentDay = currentDay.subtract(const Duration(days: 1));
+    }
+
+    return streak;
+  }
+
+  // ============================================================
+  // WEEKDAY NAME
+  // ============================================================
+
+  String _weekdayName(int weekday, AppLocalizations l10n) {
+    switch (weekday) {
+      case DateTime.monday:
+        return l10n.monday;
+
+      case DateTime.tuesday:
+        return l10n.tuesday;
+
+      case DateTime.wednesday:
+        return l10n.wednesday;
+
+      case DateTime.thursday:
+        return l10n.thursday;
+
+      case DateTime.friday:
+        return l10n.friday;
+
+      case DateTime.saturday:
+        return l10n.saturday;
+
+      case DateTime.sunday:
+        return l10n.sunday;
+
+      default:
+        return '—';
+    }
+  }
+
+  // ============================================================
+  // CATEGORY COLOR
+  // ============================================================
 
   Color _categoryColor(String category) {
     switch (category) {
@@ -899,7 +1115,8 @@ class _TaskStatusChartPainter extends CustomPainter {
   bool shouldRepaint(covariant _TaskStatusChartPainter oldDelegate) {
     return oldDelegate.completed != completed ||
         oldDelegate.pending != pending ||
-        oldDelegate.overdue != overdue;
+        oldDelegate.overdue != overdue ||
+        oldDelegate.backgroundColor != backgroundColor;
   }
 }
 

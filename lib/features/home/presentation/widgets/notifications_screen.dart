@@ -1,275 +1,533 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:task_flow/features/notification/data/model/notification_model.dart';
+import 'package:task_flow/features/notification/presentaions/cubit/notification_cubit.dart';
+import 'package:task_flow/features/notification/presentaions/cubit/notification_state.dart';
 
+import 'package:task_flow/l10n/app_localizations.dart';
 import 'package:task_flow/core/constants/app_colors.dart';
+import 'package:task_flow/core/routing/routes.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final notifications = [
-      _NotificationData(
-        title: 'Task completed',
-        message: 'You completed your Flutter UI task.',
-        time: '10 min ago',
-        icon: Icons.check_circle_outline_rounded,
-        color: AppColors.needthis,
-        unread: true,
-      ),
-      _NotificationData(
-        title: 'Task overdue',
-        message: 'Your "Review project design" task is overdue.',
-        time: '1 hour ago',
-        icon: Icons.warning_amber_rounded,
-        color: const Color(0xFFEF4444),
-        unread: true,
-      ),
-      _NotificationData(
-        title: 'Task reminder',
-        message: 'Your development task starts in 30 minutes.',
-        time: '2 hours ago',
-        icon: Icons.access_time_rounded,
-        color: const Color(0xFF2563EB),
-        unread: false,
-      ),
-      _NotificationData(
-        title: 'Task completed',
-        message: 'You completed the team meeting task.',
-        time: 'Yesterday',
-        icon: Icons.check_circle_outline_rounded,
-        color: AppColors.needthis,
-        unread: false,
-      ),
-    ];
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+    return BlocBuilder<NotificationCubit, NotificationState>(
+      builder: (context, state) {
+        if (state is NotificationInitial) {
+          context.read<NotificationCubit>().loadNotifications();
+        }
 
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF8FAFC),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
+        return Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
 
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 18,
-            color: Color(0xFF0F172A),
-          ),
-        ),
+          appBar: AppBar(
+            backgroundColor: theme.scaffoldBackgroundColor,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            surfaceTintColor: Colors.transparent,
 
-        title: const Text(
-          'Notifications',
-          style: TextStyle(
-            fontSize: 19,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
-          ),
-        ),
+            leading: IconButton(
+              onPressed: () => context.go(Routes.home),
 
-        actions: [
-          TextButton(
-            onPressed: () {
-              // UI only for now.
-            },
-            child: const Text(
-              'Read all',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: AppColors.needthis,
+              icon: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: 18,
+                color: colorScheme.onSurface,
               ),
             ),
-          ),
-        ],
-      ),
 
-      body: SafeArea(
-        child: notifications.isEmpty
-            ? _buildEmptyState()
-            : ListView(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
-                children: [
-                  _buildHeader(),
+            title: Text(
+              AppLocalizations.of(context)!.notifications,
 
-                  const SizedBox(height: 16),
-
-                  ...notifications.map(
-                    (notification) => _buildNotificationCard(notification),
-                  ),
-                ],
+              style: TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.w700,
+                color: colorScheme.onSurface,
               ),
-      ),
+            ),
+
+            centerTitle: false,
+
+            actions: [
+              if (state is NotificationLoaded &&
+                  state.unreadCount > 0)
+                TextButton(
+                  onPressed: () {
+                    context
+                        .read<NotificationCubit>()
+                        .markAllAsRead();
+                  },
+
+                  child: Text(
+                    AppLocalizations.of(context)!.readAll,
+
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.needthis,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+
+          body: SafeArea(
+            child: _buildBody(
+              context,
+              state,
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildHeader() {
+  // ============================================================
+  // BODY
+  // ============================================================
+
+  Widget _buildBody(
+    BuildContext context,
+    NotificationState state,
+  ) {
+    if (state is NotificationLoading ||
+        state is NotificationInitial) {
+      return const Center(
+        child: CircularProgressIndicator(
+          color: AppColors.needthis,
+        ),
+      );
+    }
+
+    if (state is NotificationError) {
+      return Center(
+        child: Text(
+          state.message,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+      );
+    }
+
+    if (state is NotificationLoaded) {
+      if (state.notifications.isEmpty) {
+        return _buildEmptyState(context);
+      }
+
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(
+          20,
+          10,
+          20,
+          30,
+        ),
+
+        children: [
+          _buildHeader(
+            context,
+            state.unreadCount,
+          ),
+
+          const SizedBox(height: 16),
+
+          ...state.notifications.map(
+            (notification) => _buildNotificationCard(
+              context,
+              notification,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  // ============================================================
+  // HEADER
+  // ============================================================
+
+  Widget _buildHeader(
+    BuildContext context,
+    int unreadCount,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+
     return Row(
       children: [
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Recent notifications',
+                l10n.recentNotifications,
+
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+                  color: colorScheme.onSurface,
                 ),
               ),
-              SizedBox(height: 4),
+
+              const SizedBox(height: 4),
+
               Text(
-                'Stay updated with your tasks.',
+                l10n.stayUpdatedWithYourTasks,
+
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF94A3B8),
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
           ),
         ),
 
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.needthis.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Text(
-            '2 unread',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: AppColors.needthis,
+        if (unreadCount > 0)
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 6,
+            ),
+
+            decoration: BoxDecoration(
+              color: AppColors.needthis.withValues(
+                alpha: 0.08,
+              ),
+
+              borderRadius: BorderRadius.circular(8),
+            ),
+
+            child: Text(
+              l10n.unreadCount(unreadCount),
+
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.needthis,
+              ),
             ),
           ),
-        ),
       ],
     );
   }
 
-  Widget _buildNotificationCard(_NotificationData notification) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+  // ============================================================
+  // NOTIFICATION CARD
+  // ============================================================
 
-      padding: const EdgeInsets.all(14),
+  Widget _buildNotificationCard(
+    BuildContext context,
+    NotificationModel notification,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
-      decoration: BoxDecoration(
-        color: notification.unread ? Colors.white : const Color(0xFFFBFCFE),
+    final notificationInfo = _getNotificationInfo(
+      notification,
+      l10n,
+    );
 
-        borderRadius: BorderRadius.circular(15),
+    return GestureDetector(
+      onTap: notification.isRead
+          ? null
+          : () {
+              context
+                  .read<NotificationCubit>()
+                  .markAsRead(notification.id);
+            },
 
-        border: Border.all(
-          color: notification.unread
-              ? const Color(0xFFDCE4EE)
-              : const Color(0xFFE7ECF2),
-          width: 0.7,
-        ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
 
-        boxShadow: notification.unread
-            ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.025),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ]
-            : null,
-      ),
+        padding: const EdgeInsets.all(14),
 
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
+        decoration: BoxDecoration(
+          color: notification.isRead
+              ? colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.35)
+              : theme.cardColor,
 
-            decoration: BoxDecoration(
-              color: notification.color.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(12),
-            ),
+          borderRadius: BorderRadius.circular(15),
 
-            child: Icon(notification.icon, size: 21, color: notification.color),
+          border: Border.all(
+            color: notification.isRead
+                ? colorScheme.outline.withValues(alpha: 0.20)
+                : colorScheme.outline.withValues(alpha: 0.35),
+
+            width: 0.7,
           ),
 
-          const SizedBox(width: 12),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        notification.title,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: notification.unread
-                              ? FontWeight.w800
-                              : FontWeight.w700,
-                          color: const Color(0xFF1E293B),
-                        ),
-                      ),
+          boxShadow: notification.isRead
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(
+                      alpha: theme.brightness ==
+                              Brightness.dark
+                          ? 0.12
+                          : 0.025,
                     ),
 
-                    if (notification.unread)
-                      Container(
-                        width: 7,
-                        height: 7,
-                        margin: const EdgeInsets.only(top: 5, left: 8),
-                        decoration: const BoxDecoration(
-                          color: AppColors.needthis,
-                          shape: BoxShape.circle,
+                    blurRadius: 10,
+
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+        ),
+
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+
+              decoration: BoxDecoration(
+                color: notificationInfo.color.withValues(
+                  alpha: 0.10,
+                ),
+
+                borderRadius: BorderRadius.circular(12),
+              ),
+
+              child: Icon(
+                notificationInfo.icon,
+                size: 21,
+                color: notificationInfo.color,
+              ),
+            ),
+
+            const SizedBox(width: 12),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+
+                children: [
+                  Row(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+
+                    children: [
+                      Expanded(
+                        child: Text(
+                          notificationInfo.title,
+
+                          style: TextStyle(
+                            fontSize: 13,
+
+                            fontWeight:
+                                notification.isRead
+                                    ? FontWeight.w700
+                                    : FontWeight.w800,
+
+                            color:
+                                colorScheme.onSurface,
+                          ),
                         ),
                       ),
-                  ],
-                ),
 
-                const SizedBox(height: 5),
+                      if (!notification.isRead)
+                        Container(
+                          width: 7,
+                          height: 7,
 
-                Text(
-                  notification.message,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    height: 1.4,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF64748B),
+                          margin:
+                              const EdgeInsets.only(
+                            top: 5,
+                            left: 8,
+                          ),
+
+                          decoration:
+                              const BoxDecoration(
+                            color: AppColors.needthis,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                    ],
                   ),
-                ),
 
-                const SizedBox(height: 7),
+                  const SizedBox(height: 5),
 
-                Text(
-                  notification.time,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF94A3B8),
+                  Text(
+                    notificationInfo.message,
+
+                    maxLines: 2,
+
+                    overflow:
+                        TextOverflow.ellipsis,
+
+                    style: TextStyle(
+                      fontSize: 11,
+                      height: 1.4,
+                      fontWeight: FontWeight.w500,
+                      color:
+                          colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 7),
+
+                  Text(
+                    _formatTime(
+                      notification.createdAt,
+                      l10n,
+                    ),
+
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme
+                          .onSurfaceVariant
+                          .withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildEmptyState() {
+  // ============================================================
+  // NOTIFICATION INFO
+  // ============================================================
+
+  _NotificationInfo _getNotificationInfo(
+    NotificationModel notification,
+    AppLocalizations l10n,
+  ) {
+    switch (notification.type) {
+      case NotificationType.taskCompleted:
+        return _NotificationInfo(
+          title: l10n.taskCompletedNotification,
+          message: notification.taskTitle ??
+              l10n.completedFlutterUiTask,
+          icon: Icons.check_circle_outline_rounded,
+          color: AppColors.needthis,
+        );
+
+      case NotificationType.taskOverdue:
+        return _NotificationInfo(
+          title: l10n.taskOverdueNotification,
+          message:
+              notification.taskTitle ??
+              l10n.overdueTaskMessage,
+          icon: Icons.warning_amber_rounded,
+          color: const Color(0xFFEF4444),
+        );
+
+      case NotificationType.taskReminder:
+        return _NotificationInfo(
+          title: l10n.taskReminderNotification,
+          message:
+              notification.taskTitle ??
+              l10n.taskStartsIn30Minutes,
+          icon: Icons.access_time_rounded,
+          color: const Color(0xFF2563EB),
+        );
+
+      case NotificationType.focusSessionFinished:
+        return _NotificationInfo(
+          title: l10n.focusSessionFinishedNotification,
+          message: l10n.focusSessionFinishedMessage,
+          icon: Icons.center_focus_strong,
+          color: const Color(0xFF8B5CF6),
+        );
+
+      case NotificationType.breakStarted:
+        return _NotificationInfo(
+          title: l10n.breakStartedNotification,
+          message: l10n.breakStartedMessage,
+          icon: Icons.free_breakfast_outlined,
+          color: const Color(0xFF10B981),
+        );
+
+      case NotificationType.breakFinished:
+        return _NotificationInfo(
+          title: l10n.breakFinishedNotification,
+          message: l10n.breakFinishedMessage,
+          icon: Icons.timer_outlined,
+          color: const Color(0xFF2563EB),
+        );
+      case NotificationType.dailyApp:
+        // TODO: Handle this case.
+        throw UnimplementedError();
+      case NotificationType.streak:
+        // TODO: Handle this case.
+        throw UnimplementedError();
+    }
+  }
+
+  // ============================================================
+  // TIME
+  // ============================================================
+
+  String _formatTime(
+    DateTime createdAt,
+    AppLocalizations l10n,
+  ) {
+    final difference = DateTime.now().difference(createdAt);
+
+    if (difference.inMinutes < 1) {
+      return l10n.justNow;
+    }
+
+    if (difference.inMinutes < 60) {
+      return l10n.minutesAgo(
+        difference.inMinutes,
+      );
+    }
+
+    if (difference.inHours < 24) {
+      return l10n.hourAgo(
+        difference.inHours,
+      );
+    }
+
+    if (difference.inDays == 1) {
+      return l10n.yesterday;
+    }
+
+    return '${createdAt.day}/${createdAt.month}/${createdAt.year}';
+  }
+
+  // ============================================================
+  // EMPTY STATE
+  // ============================================================
+
+  Widget _buildEmptyState(
+    BuildContext context,
+  ) {
+    final colorScheme =
+        Theme.of(context).colorScheme;
+
+    final l10n = AppLocalizations.of(context)!;
+
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 40),
 
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment:
+              MainAxisAlignment.center,
 
           children: [
             Container(
@@ -277,7 +535,11 @@ class NotificationsScreen extends StatelessWidget {
               height: 76,
 
               decoration: BoxDecoration(
-                color: AppColors.needthis.withValues(alpha: 0.08),
+                color:
+                    AppColors.needthis.withValues(
+                  alpha: 0.08,
+                ),
+
                 shape: BoxShape.circle,
               ),
 
@@ -290,25 +552,29 @@ class NotificationsScreen extends StatelessWidget {
 
             const SizedBox(height: 18),
 
-            const Text(
-              'No notifications',
+            Text(
+              l10n.noNotifications,
+
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF0F172A),
+                color: colorScheme.onSurface,
               ),
             ),
 
             const SizedBox(height: 7),
 
-            const Text(
-              'You are all caught up. New task updates and reminders will appear here.',
+            Text(
+              l10n.allCaughtUp,
+
               textAlign: TextAlign.center,
+
               style: TextStyle(
                 fontSize: 12,
                 height: 1.5,
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF94A3B8),
+                color:
+                    colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -318,20 +584,20 @@ class NotificationsScreen extends StatelessWidget {
   }
 }
 
-class _NotificationData {
+// ============================================================
+// NOTIFICATION INFO
+// ============================================================
+
+class _NotificationInfo {
   final String title;
   final String message;
-  final String time;
   final IconData icon;
   final Color color;
-  final bool unread;
 
-  const _NotificationData({
+  const _NotificationInfo({
     required this.title,
     required this.message,
-    required this.time,
     required this.icon,
     required this.color,
-    required this.unread,
   });
 }

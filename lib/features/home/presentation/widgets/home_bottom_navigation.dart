@@ -15,6 +15,9 @@ class HomeBottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return SizedBox(
       height: 92,
       child: Stack(
@@ -23,14 +26,17 @@ class HomeBottomNavigation extends StatelessWidget {
           Container(
             height: 92,
             padding: const EdgeInsets.symmetric(horizontal: 18),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(18),
                 topRight: Radius.circular(18),
               ),
               border: Border(
-                top: BorderSide(color: Color(0xFFE2E8F0), width: 0.5),
+                top: BorderSide(
+                  color: colorScheme.outline.withValues(alpha: 0.35),
+                  width: 0.5,
+                ),
               ),
             ),
             child: Row(
@@ -147,7 +153,12 @@ class _NavigationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final bool isSelected = currentIndex == index;
+
+    final Color inactiveColor = colorScheme.onSurfaceVariant;
 
     return GestureDetector(
       onTap: () => onTap(index),
@@ -160,7 +171,7 @@ class _NavigationItem extends StatelessWidget {
             Icon(
               isSelected ? activeIcon : icon,
               size: 25,
-              color: isSelected ? AppColors.needthis : const Color(0xFF94A3B8),
+              color: isSelected ? AppColors.needthis : inactiveColor,
             ),
 
             const SizedBox(height: 4),
@@ -170,9 +181,7 @@ class _NavigationItem extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected
-                    ? AppColors.needthis
-                    : const Color(0xFF94A3B8),
+                color: isSelected ? AppColors.needthis : inactiveColor,
               ),
             ),
           ],
