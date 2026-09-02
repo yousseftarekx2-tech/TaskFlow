@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:task_flow/core/service/notification_service.dart';
 import 'package:task_flow/core/storage/notification_storage.dart';
 import 'package:task_flow/core/storage/settings_storage.dart';
@@ -22,56 +23,31 @@ import 'app.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ============================================================
-  // STORAGE
-  // ============================================================
-
   final settingsStorage = SettingsStorage();
   final taskStorage = TaskStorage();
   final notificationStorage = NotificationStorage();
-
-  // ============================================================
-  // LOCAL NOTIFICATIONS
-  // ============================================================
+  final categoryStorage = CategoryStorage();
+  final userStorage = UserStorage();
 
   await LocalNotificationService.instance.initialize();
 
   runApp(
     MultiBlocProvider(
       providers: [
-        // ============================================================
-        // USER
-        // ============================================================
         BlocProvider<UserCubit>(
-          create: (_) => UserCubit(UserStorage())..loadUser(),
+          create: (_) => UserCubit(userStorage)..loadUser(),
         ),
-
-        // ============================================================
-        // SETTINGS
-        // ============================================================
         BlocProvider<SettingsCubit>(
           create: (_) => SettingsCubit(settingsStorage)..loadSettings(),
         ),
-
-        // ============================================================
-        // NOTIFICATIONS
-        // ============================================================
         BlocProvider<NotificationCubit>(
           create: (_) =>
               NotificationCubit(notificationStorage, settingsStorage)
                 ..loadNotifications(),
         ),
-
-        // ============================================================
-        // FOCUS
-        // ============================================================
         BlocProvider<FocusCubit>(
           create: (context) => FocusCubit(context.read<NotificationCubit>()),
         ),
-
-        // ============================================================
-        // TASKS
-        // ============================================================
         BlocProvider<TaskBloc>(
           create: (context) => TaskBloc(
             taskStorage,
@@ -79,18 +55,12 @@ Future<void> main() async {
             settingsStorage,
           )..add(const LoadTasks()),
         ),
-
-        // ============================================================
-        // CATEGORIES
-        // ============================================================
         BlocProvider<CategoryCubit>(
-          create: (_) => CategoryCubit(CategoryStorage())..loadCategories(),
+          create: (_) => CategoryCubit(categoryStorage)..loadCategories(),
         ),
-
-        // ============================================================
-        // STREAK
-        // ============================================================
-        BlocProvider<StreakCubit>(create: (_) => StreakCubit(StreakStorage())),
+        BlocProvider<StreakCubit>(
+          create: (_) => StreakCubit(StreakStorage(), settingsStorage),
+        ),
       ],
       child: const TaskFlowApp(),
     ),

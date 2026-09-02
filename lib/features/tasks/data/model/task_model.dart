@@ -8,6 +8,7 @@ class TaskModel {
   final TaskStatus status;
   final DateTime createdAt;
   final DateTime scheduledAt;
+  final DateTime? completedAt;
 
   const TaskModel({
     required this.id,
@@ -17,6 +18,7 @@ class TaskModel {
     required this.status,
     required this.createdAt,
     required this.scheduledAt,
+    this.completedAt,
   });
 
   bool get isCompleted => status == TaskStatus.completed;
@@ -24,10 +26,6 @@ class TaskModel {
   bool get isPending => status == TaskStatus.pending;
 
   bool get isOverdue => status == TaskStatus.overdue;
-
-  // ============================================================
-  // TO JSON
-  // ============================================================
 
   Map<String, dynamic> toJson() {
     return {
@@ -38,14 +36,13 @@ class TaskModel {
       'status': status.name,
       'createdAt': createdAt.toIso8601String(),
       'scheduledAt': scheduledAt.toIso8601String(),
+      'completedAt': completedAt?.toIso8601String(),
     };
   }
 
-  // ============================================================
-  // FROM JSON
-  // ============================================================
-
   factory TaskModel.fromJson(Map<String, dynamic> json) {
+    final dynamic completedAtValue = json['completedAt'];
+
     return TaskModel(
       id: json['id'] as String,
       title: json['title'] as String,
@@ -57,12 +54,11 @@ class TaskModel {
       ),
       createdAt: DateTime.parse(json['createdAt'] as String),
       scheduledAt: DateTime.parse(json['scheduledAt'] as String),
+      completedAt: completedAtValue == null
+          ? null
+          : DateTime.parse(completedAtValue as String),
     );
   }
-
-  // ============================================================
-  // COPY WITH
-  // ============================================================
 
   TaskModel copyWith({
     String? id,
@@ -72,6 +68,7 @@ class TaskModel {
     TaskStatus? status,
     DateTime? createdAt,
     DateTime? scheduledAt,
+    DateTime? completedAt,
   }) {
     return TaskModel(
       id: id ?? this.id,
@@ -81,6 +78,7 @@ class TaskModel {
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       scheduledAt: scheduledAt ?? this.scheduledAt,
+      completedAt: completedAt ?? this.completedAt,
     );
   }
 }

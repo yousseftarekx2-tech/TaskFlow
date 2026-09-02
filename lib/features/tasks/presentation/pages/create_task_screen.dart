@@ -5,10 +5,10 @@ import 'package:task_flow/core/constants/app_colors.dart';
 import 'package:task_flow/features/category/cubit/category_cubit.dart';
 import 'package:task_flow/features/category/cubit/category_state.dart';
 import 'package:task_flow/features/category/data/model/category_model.dart';
+import 'package:task_flow/features/settings/presnetation/cubit/settings_cubit.dart';
 import 'package:task_flow/features/tasks/data/model/task_model.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_bloc.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_event.dart';
-import 'package:task_flow/features/settings/presnetation/cubit/settings_cubit.dart';
 import 'package:task_flow/l10n/app_localizations.dart';
 
 class CreateTaskScreen extends StatefulWidget {
@@ -24,17 +24,12 @@ class CreateTaskScreen extends StatefulWidget {
 
 class _CreateTaskScreenState extends State<CreateTaskScreen> {
   final TextEditingController _titleController = TextEditingController();
-
   final TextEditingController _descriptionController = TextEditingController();
 
   String? _selectedCategory;
 
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
-
-  // ============================================================
-  // INIT
-  // ============================================================
 
   @override
   void initState() {
@@ -45,7 +40,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     if (task != null) {
       _titleController.text = task.title;
       _descriptionController.text = task.description;
-
       _selectedCategory = task.category;
 
       _selectedDate = DateTime(
@@ -61,25 +55,15 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     }
   }
 
-  // ============================================================
-  // DISPOSE
-  // ============================================================
-
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-
     super.dispose();
   }
 
-  // ============================================================
-  // DATE
-  // ============================================================
-
   Future<void> _selectDate() async {
     final DateTime now = DateTime.now();
-
     final DateTime today = DateTime(now.year, now.month, now.day);
 
     final DateTime selectedDate = _selectedDate != null
@@ -105,17 +89,17 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: isDark
-                ? ColorScheme.dark(
+                ? const ColorScheme.dark(
                     primary: AppColors.needthis,
                     onPrimary: Colors.white,
-                    surface: const Color(0xFF1E293B),
+                    surface: Color(0xFF1E293B),
                     onSurface: Colors.white,
                   )
-                : ColorScheme.light(
+                : const ColorScheme.light(
                     primary: AppColors.needthis,
                     onPrimary: Colors.white,
                     surface: Colors.white,
-                    onSurface: const Color(0xFF0F172A),
+                    onSurface: Color(0xFF0F172A),
                   ),
           ),
           child: child!,
@@ -132,10 +116,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     });
   }
 
-  // ============================================================
-  // TIME
-  // ============================================================
-
   Future<void> _selectTime() async {
     final TimeOfDay? pickedTime = await showTimePicker(
       context: context,
@@ -146,17 +126,17 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: isDark
-                ? ColorScheme.dark(
+                ? const ColorScheme.dark(
                     primary: AppColors.needthis,
                     onPrimary: Colors.white,
-                    surface: const Color(0xFF1E293B),
+                    surface: Color(0xFF1E293B),
                     onSurface: Colors.white,
                   )
-                : ColorScheme.light(
+                : const ColorScheme.light(
                     primary: AppColors.needthis,
                     onPrimary: Colors.white,
                     surface: Colors.white,
-                    onSurface: const Color(0xFF0F172A),
+                    onSurface: Color(0xFF0F172A),
                   ),
           ),
           child: child!,
@@ -173,10 +153,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     });
   }
 
-  // ============================================================
-  // FORMAT DATE
-  // ============================================================
-
   String _formatDate(AppLocalizations l10n) {
     if (_selectedDate == null) {
       return l10n.selectDate;
@@ -189,10 +165,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         '${date.year}';
   }
 
-  // ============================================================
-  // FORMAT TIME
-  // ============================================================
-
   String _formatTime(AppLocalizations l10n) {
     if (_selectedTime == null) {
       return l10n.selectTime;
@@ -200,10 +172,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
     return _selectedTime!.format(context);
   }
-
-  // ============================================================
-  // BUILD SCHEDULED AT
-  // ============================================================
 
   DateTime _buildScheduledAt() {
     return DateTime(
@@ -215,22 +183,16 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 
-  // ============================================================
-  // SAVE TASK
-  // ============================================================
-
   void _saveTask() {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
 
     final String title = _titleController.text.trim();
-
     final String description = _descriptionController.text.trim();
 
     if (title.isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.taskTitleRequired)));
-
       return;
     }
 
@@ -238,7 +200,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.categoryRequired)));
-
       return;
     }
 
@@ -246,7 +207,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.dateRequired)));
-
       return;
     }
 
@@ -254,21 +214,14 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.timeRequired)));
-
       return;
     }
 
     final DateTime scheduledAt = _buildScheduledAt();
-
     final TaskBloc taskBloc = context.read<TaskBloc>();
-
-    // ==========================================================
-    // EDIT
-    // ==========================================================
 
     if (widget.isEditing) {
       final TaskModel oldTask = widget.task!;
-
       final DateTime now = DateTime.now();
 
       TaskStatus newStatus = oldTask.status;
@@ -301,10 +254,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       return;
     }
 
-    // ==========================================================
-    // CREATE
-    // ==========================================================
-
     final DateTime now = DateTime.now();
 
     final TaskModel newTask = TaskModel(
@@ -332,10 +281,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     Navigator.pop(context);
   }
 
-  // ============================================================
-  // ADD CATEGORY
-  // ============================================================
-
   Future<void> _showAddCategoryDialog() async {
     final CategoryModel? result = await showDialog<CategoryModel>(
       context: context,
@@ -349,32 +294,33 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       return;
     }
 
-    await context.read<CategoryCubit>().addCategory(
-      name: result.name,
-      color: result.color,
-      icon: result.icon,
-    );
+    final CategoryModel? addedCategory = await context
+        .read<CategoryCubit>()
+        .addCategory(name: result.name, color: result.color, icon: result.icon);
 
-    if (!mounted) {
+    if (!mounted || addedCategory == null) {
       return;
     }
 
     setState(() {
-      _selectedCategory = result.name;
+      _selectedCategory = addedCategory.name;
     });
   }
-
-  // ============================================================
-  // BUILD
-  // ============================================================
 
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-
     final bool isEditing = widget.isEditing;
 
-    final settingsState = context.watch<SettingsCubit>().state;
+    final Size screenSize = MediaQuery.sizeOf(context);
+    final bool isSmallWidth = screenSize.width < 360;
+    final bool isShortScreen = screenSize.height < 700;
+
+    final double horizontalPadding = isSmallWidth ? 14 : 20;
+    final double topPadding = isShortScreen ? 6 : 8;
+    final double bottomPadding = isShortScreen ? 20 : 30;
+
+    final SettingsState settingsState = context.watch<SettingsCubit>().state;
 
     final bool isDark = settingsState.darkModeEnabled;
 
@@ -388,7 +334,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         ? Colors.white
         : const Color(0xFF0F172A);
 
-    final Color secondaryTextColor = const Color(0xFF94A3B8);
+    const Color secondaryTextColor = Color(0xFF94A3B8);
 
     final Color borderColor = isDark
         ? const Color(0xFF334155)
@@ -396,37 +342,34 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
         scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: true,
-
+        toolbarHeight: isSmallWidth ? 54 : 56,
+        leadingWidth: isSmallWidth ? 48 : 56,
         leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
+          padding: EdgeInsets.zero,
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            size: 18,
+            size: isSmallWidth ? 17 : 18,
             color: primaryTextColor,
           ),
         ),
-
         title: Text(
           isEditing ? l10n.editTaskTitle : l10n.createTaskTitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 19,
+            fontSize: isSmallWidth ? 18 : 19,
             fontWeight: FontWeight.w700,
             color: primaryTextColor,
           ),
         ),
       ),
-
-      // ==========================================================
-      // CATEGORY CUBIT
-      // ==========================================================
       body: BlocBuilder<CategoryCubit, CategoryState>(
         builder: (context, categoryState) {
           final List<CategoryModel> categories = categoryState.categories;
@@ -438,17 +381,21 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           return SafeArea(
             child: SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
-
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                topPadding,
+                horizontalPadding,
+                bottomPadding,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-
                 children: [
-                  _buildLabel(l10n.taskTitleLabel, isDark: isDark),
-
-                  const SizedBox(height: 9),
-
+                  _buildLabel(
+                    l10n.taskTitleLabel,
+                    isDark: isDark,
+                    isSmallWidth: isSmallWidth,
+                  ),
+                  SizedBox(height: isSmallWidth ? 7 : 9),
                   _buildTextField(
                     controller: _titleController,
                     hint: l10n.taskTitleHint,
@@ -457,40 +404,43 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     primaryTextColor: primaryTextColor,
                     borderColor: borderColor,
                     secondaryTextColor: secondaryTextColor,
+                    isSmallWidth: isSmallWidth,
                   ),
-
-                  const SizedBox(height: 21),
-
-                  _buildLabel(l10n.descriptionLabel, isDark: isDark),
-
-                  const SizedBox(height: 9),
-
+                  SizedBox(height: isSmallWidth ? 17 : 21),
+                  _buildLabel(
+                    l10n.descriptionLabel,
+                    isDark: isDark,
+                    isSmallWidth: isSmallWidth,
+                  ),
+                  SizedBox(height: isSmallWidth ? 7 : 9),
                   _buildTextField(
                     controller: _descriptionController,
                     hint: l10n.descriptionHint,
-                    maxLines: 4,
+                    maxLines: isSmallWidth ? 3 : 4,
                     isDark: isDark,
                     cardColor: cardColor,
                     primaryTextColor: primaryTextColor,
                     borderColor: borderColor,
                     secondaryTextColor: secondaryTextColor,
+                    isSmallWidth: isSmallWidth,
                   ),
-
-                  const SizedBox(height: 21),
-
-                  _buildLabel(l10n.categoryLabel, isDark: isDark),
-
-                  const SizedBox(height: 11),
-
+                  SizedBox(height: isSmallWidth ? 17 : 21),
+                  _buildLabel(
+                    l10n.categoryLabel,
+                    isDark: isDark,
+                    isSmallWidth: isSmallWidth,
+                  ),
+                  SizedBox(height: isSmallWidth ? 8 : 11),
                   if (categories.isNotEmpty)
                     Wrap(
-                      spacing: 9,
-                      runSpacing: 9,
+                      spacing: isSmallWidth ? 7 : 9,
+                      runSpacing: isSmallWidth ? 7 : 9,
                       children: [
                         ...categories.map(
                           (category) => _buildCategoryChip(
                             category,
                             selectedCategory: selectedCategory,
+                            isSmallWidth: isSmallWidth,
                           ),
                         ),
                         _buildAddCategoryChip(
@@ -499,38 +449,40 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                           borderColor: borderColor,
                           secondaryTextColor: secondaryTextColor,
                           l10n: l10n,
+                          isSmallWidth: isSmallWidth,
                         ),
                       ],
                     )
                   else
-                    Row(
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
                           l10n.noCategoriesYet,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: isSmallWidth ? 11 : 12,
                             color: secondaryTextColor,
                           ),
                         ),
-
-                        const SizedBox(width: 10),
-
                         _buildAddCategoryChip(
                           isDark: isDark,
                           cardColor: cardColor,
                           borderColor: borderColor,
                           secondaryTextColor: secondaryTextColor,
                           l10n: l10n,
+                          isSmallWidth: isSmallWidth,
                         ),
                       ],
                     ),
-
-                  const SizedBox(height: 22),
-
-                  _buildLabel(l10n.dateLabel, isDark: isDark),
-
-                  const SizedBox(height: 9),
-
+                  SizedBox(height: isSmallWidth ? 18 : 22),
+                  _buildLabel(
+                    l10n.dateLabel,
+                    isDark: isDark,
+                    isSmallWidth: isSmallWidth,
+                  ),
+                  SizedBox(height: isSmallWidth ? 7 : 9),
                   _buildSelectField(
                     icon: Icons.calendar_today_outlined,
                     text: _formatDate(l10n),
@@ -541,14 +493,15 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     primaryTextColor: primaryTextColor,
                     borderColor: borderColor,
                     secondaryTextColor: secondaryTextColor,
+                    isSmallWidth: isSmallWidth,
                   ),
-
-                  const SizedBox(height: 21),
-
-                  _buildLabel(l10n.timeLabel, isDark: isDark),
-
-                  const SizedBox(height: 9),
-
+                  SizedBox(height: isSmallWidth ? 17 : 21),
+                  _buildLabel(
+                    l10n.timeLabel,
+                    isDark: isDark,
+                    isSmallWidth: isSmallWidth,
+                  ),
+                  SizedBox(height: isSmallWidth ? 7 : 9),
                   _buildSelectField(
                     icon: Icons.access_time_outlined,
                     text: _formatTime(l10n),
@@ -559,31 +512,30 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     primaryTextColor: primaryTextColor,
                     borderColor: borderColor,
                     secondaryTextColor: secondaryTextColor,
+                    isSmallWidth: isSmallWidth,
                   ),
-
-                  const SizedBox(height: 34),
-
+                  SizedBox(height: isSmallWidth ? 26 : 34),
                   SizedBox(
                     width: double.infinity,
-                    height: 52,
-
+                    height: isSmallWidth ? 48 : 52,
                     child: ElevatedButton(
                       onPressed: _saveTask,
-
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.needthis,
                         foregroundColor: Colors.white,
                         elevation: 0,
-
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(
+                            isSmallWidth ? 11 : 12,
+                          ),
                         ),
                       ),
-
                       child: Text(
                         isEditing ? l10n.saveChanges : l10n.createTask,
-                        style: const TextStyle(
-                          fontSize: 14,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: isSmallWidth ? 13 : 14,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -598,24 +550,22 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 
-  // ============================================================
-  // LABEL
-  // ============================================================
-
-  Widget _buildLabel(String text, {required bool isDark}) {
+  Widget _buildLabel(
+    String text, {
+    required bool isDark,
+    required bool isSmallWidth,
+  }) {
     return Text(
       text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
       style: TextStyle(
-        fontSize: 14,
+        fontSize: isSmallWidth ? 13 : 14,
         fontWeight: FontWeight.w700,
         color: isDark ? Colors.white : const Color(0xFF0F172A),
       ),
     );
   }
-
-  // ============================================================
-  // TEXT FIELD
-  // ============================================================
 
   Widget _buildTextField({
     required TextEditingController controller,
@@ -625,60 +575,50 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     required Color primaryTextColor,
     required Color borderColor,
     required Color secondaryTextColor,
+    required bool isSmallWidth,
     int maxLines = 1,
   }) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
-
       style: TextStyle(
-        fontSize: 14,
+        fontSize: isSmallWidth ? 13 : 14,
         fontWeight: FontWeight.w500,
         color: primaryTextColor,
       ),
-
       decoration: InputDecoration(
         hintText: hint,
-
         hintStyle: TextStyle(
-          fontSize: 13,
+          fontSize: isSmallWidth ? 12 : 13,
           fontWeight: FontWeight.w400,
           color: secondaryTextColor,
         ),
-
         filled: true,
         fillColor: cardColor,
-
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 15,
-          vertical: 14,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: isSmallWidth ? 13 : 15,
+          vertical: isSmallWidth ? 12 : 14,
         ),
-
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(isSmallWidth ? 11 : 12),
           borderSide: BorderSide(color: borderColor, width: 0.7),
         ),
-
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(isSmallWidth ? 11 : 12),
           borderSide: BorderSide(color: borderColor, width: 0.7),
         ),
-
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(isSmallWidth ? 11 : 12),
           borderSide: const BorderSide(color: AppColors.needthis, width: 1),
         ),
       ),
     );
   }
 
-  // ============================================================
-  // CATEGORY CHIP
-  // ============================================================
-
   Widget _buildCategoryChip(
     CategoryModel category, {
     required String? selectedCategory,
+    required bool isSmallWidth,
   }) {
     final bool selected = selectedCategory == category.name;
 
@@ -688,22 +628,20 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           _selectedCategory = category.name;
         });
       },
-
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-
         curve: Curves.easeOut,
-
         padding: EdgeInsets.symmetric(
-          horizontal: selected ? 15 : 13,
-          vertical: selected ? 10 : 8,
+          horizontal: selected
+              ? (isSmallWidth ? 13 : 15)
+              : (isSmallWidth ? 11 : 13),
+          vertical: selected ? (isSmallWidth ? 9 : 10) : (isSmallWidth ? 7 : 8),
         ),
-
         decoration: BoxDecoration(
           color: category.color.withValues(alpha: 0.10),
-
-          borderRadius: BorderRadius.circular(selected ? 10 : 9),
-
+          borderRadius: BorderRadius.circular(
+            selected ? (isSmallWidth ? 9 : 10) : (isSmallWidth ? 8 : 9),
+          ),
           border: Border.all(
             color: selected
                 ? category.color.withValues(alpha: 0.40)
@@ -711,12 +649,14 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
             width: selected ? 1.1 : 0.8,
           ),
         ),
-
         child: Text(
           category.name,
-
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: selected ? 13 : 12,
+            fontSize: selected
+                ? (isSmallWidth ? 12 : 13)
+                : (isSmallWidth ? 11 : 12),
             fontWeight: FontWeight.w700,
             color: category.color,
           ),
@@ -725,46 +665,44 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 
-  // ============================================================
-  // ADD CATEGORY CHIP
-  // ============================================================
-
   Widget _buildAddCategoryChip({
     required bool isDark,
     required Color cardColor,
     required Color borderColor,
     required Color secondaryTextColor,
     required AppLocalizations l10n,
+    required bool isSmallWidth,
   }) {
     return GestureDetector(
       onTap: _showAddCategoryDialog,
-
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-
+        padding: EdgeInsets.symmetric(
+          horizontal: isSmallWidth ? 11 : 13,
+          vertical: isSmallWidth ? 7 : 8,
+        ),
         decoration: BoxDecoration(
           color: cardColor,
-
-          borderRadius: BorderRadius.circular(9),
-
+          borderRadius: BorderRadius.circular(isSmallWidth ? 8 : 9),
           border: Border.all(
             color: isDark ? const Color(0xFF475569) : const Color(0xFFD6DCE5),
             width: 0.8,
           ),
         ),
-
         child: Row(
           mainAxisSize: MainAxisSize.min,
-
           children: [
-            Icon(Icons.add_rounded, size: 15, color: secondaryTextColor),
-
-            const SizedBox(width: 4),
-
+            Icon(
+              Icons.add_rounded,
+              size: isSmallWidth ? 14 : 15,
+              color: secondaryTextColor,
+            ),
+            SizedBox(width: isSmallWidth ? 3 : 4),
             Text(
               l10n.addCategory,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: isSmallWidth ? 11 : 12,
                 fontWeight: FontWeight.w600,
                 color: secondaryTextColor,
               ),
@@ -774,10 +712,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       ),
     );
   }
-
-  // ============================================================
-  // SELECT FIELD
-  // ============================================================
 
   Widget _buildSelectField({
     required IconData icon,
@@ -789,49 +723,42 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     required Color primaryTextColor,
     required Color borderColor,
     required Color secondaryTextColor,
+    required bool isSmallWidth,
   }) {
     return GestureDetector(
       onTap: onTap,
-
       child: Container(
         width: double.infinity,
-        height: 50,
-
-        padding: const EdgeInsets.symmetric(horizontal: 15),
-
+        height: isSmallWidth ? 48 : 50,
+        padding: EdgeInsets.symmetric(horizontal: isSmallWidth ? 13 : 15),
         decoration: BoxDecoration(
           color: cardColor,
-
-          borderRadius: BorderRadius.circular(12),
-
+          borderRadius: BorderRadius.circular(isSmallWidth ? 11 : 12),
           border: Border.all(color: borderColor, width: 0.7),
         ),
-
         child: Row(
           children: [
             Icon(
               icon,
-              size: 18,
+              size: isSmallWidth ? 17 : 18,
               color: selected ? AppColors.needthis : secondaryTextColor,
             ),
-
-            const SizedBox(width: 10),
-
+            SizedBox(width: isSmallWidth ? 8 : 10),
             Expanded(
               child: Text(
                 text,
-
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: isSmallWidth ? 12 : 13,
                   fontWeight: FontWeight.w500,
                   color: selected ? primaryTextColor : secondaryTextColor,
                 ),
               ),
             ),
-
             Icon(
               Icons.keyboard_arrow_down_rounded,
-              size: 20,
+              size: isSmallWidth ? 19 : 20,
               color: secondaryTextColor,
             ),
           ],
@@ -840,10 +767,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 }
-
-// ============================================================
-// ADD CATEGORY DIALOG
-// ============================================================
 
 class _AddCategoryDialog extends StatefulWidget {
   const _AddCategoryDialog();
@@ -896,6 +819,10 @@ class _AddCategoryDialogState extends State<_AddCategoryDialog> {
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
 
+    final Size screenSize = MediaQuery.sizeOf(context);
+    final bool isSmallWidth = screenSize.width < 360;
+    final bool isShortScreen = screenSize.height < 700;
+
     final bool isDark = context.watch<SettingsCubit>().state.darkModeEnabled;
 
     final Color dialogBackground = isDark
@@ -919,155 +846,172 @@ class _AddCategoryDialogState extends State<_AddCategoryDialog> {
         : const Color(0xFFE2E8F0);
 
     return AlertDialog(
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isSmallWidth ? 16 : 24,
+        vertical: isShortScreen ? 20 : 24,
+      ),
       backgroundColor: dialogBackground,
-
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(isSmallWidth ? 15 : 18),
+      ),
+      titlePadding: EdgeInsets.fromLTRB(
+        isSmallWidth ? 18 : 24,
+        isSmallWidth ? 18 : 24,
+        isSmallWidth ? 18 : 24,
+        0,
+      ),
+      contentPadding: EdgeInsets.fromLTRB(
+        isSmallWidth ? 18 : 24,
+        isSmallWidth ? 14 : 16,
+        isSmallWidth ? 18 : 24,
+        0,
+      ),
+      actionsPadding: EdgeInsets.fromLTRB(
+        isSmallWidth ? 12 : 16,
+        isSmallWidth ? 12 : 16,
+        isSmallWidth ? 12 : 16,
+        isSmallWidth ? 12 : 16,
+      ),
       title: Text(
         l10n.addCategoryTitle,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          fontSize: 18,
+          fontSize: isSmallWidth ? 17 : 18,
           fontWeight: FontWeight.w700,
           color: primaryTextColor,
         ),
       ),
-
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-
-        crossAxisAlignment: CrossAxisAlignment.start,
-
-        children: [
-          Text(
-            l10n.categoryNameLabel,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: primaryTextColor,
-            ),
-          ),
-
-          const SizedBox(height: 9),
-
-          TextField(
-            controller: _controller,
-
-            style: TextStyle(fontSize: 13, color: primaryTextColor),
-
-            decoration: InputDecoration(
-              hintText: l10n.categoryNameHint,
-
-              hintStyle: TextStyle(fontSize: 12, color: secondaryTextColor),
-
-              filled: true,
-              fillColor: fieldBackground,
-
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(11),
-                borderSide: BorderSide(color: borderColor),
-              ),
-
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(11),
-                borderSide: BorderSide(color: borderColor),
-              ),
-
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(11),
-                borderSide: const BorderSide(color: AppColors.needthis),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.categoryNameLabel,
+              style: TextStyle(
+                fontSize: isSmallWidth ? 12 : 13,
+                fontWeight: FontWeight.w700,
+                color: primaryTextColor,
               ),
             ),
-          ),
-
-          const SizedBox(height: 20),
-
-          Text(
-            l10n.chooseColor,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: primaryTextColor,
+            SizedBox(height: isSmallWidth ? 7 : 9),
+            TextField(
+              controller: _controller,
+              style: TextStyle(
+                fontSize: isSmallWidth ? 12 : 13,
+                color: primaryTextColor,
+              ),
+              decoration: InputDecoration(
+                hintText: l10n.categoryNameHint,
+                hintStyle: TextStyle(
+                  fontSize: isSmallWidth ? 11 : 12,
+                  color: secondaryTextColor,
+                ),
+                filled: true,
+                fillColor: fieldBackground,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: isSmallWidth ? 12 : 14,
+                  vertical: isSmallWidth ? 11 : 13,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(isSmallWidth ? 10 : 11),
+                  borderSide: BorderSide(color: borderColor),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(isSmallWidth ? 10 : 11),
+                  borderSide: BorderSide(color: borderColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(isSmallWidth ? 10 : 11),
+                  borderSide: const BorderSide(color: AppColors.needthis),
+                ),
+              ),
             ),
-          ),
+            SizedBox(height: isSmallWidth ? 16 : 20),
+            Text(
+              l10n.chooseColor,
+              style: TextStyle(
+                fontSize: isSmallWidth ? 12 : 13,
+                fontWeight: FontWeight.w700,
+                color: primaryTextColor,
+              ),
+            ),
+            SizedBox(height: isSmallWidth ? 9 : 12),
+            Wrap(
+              spacing: isSmallWidth ? 10 : 12,
+              runSpacing: isSmallWidth ? 10 : 12,
+              children: _colors.map((color) {
+                final bool selected = _selectedColor == color;
 
-          const SizedBox(height: 12),
-
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-
-            children: _colors.map((color) {
-              final bool selected = _selectedColor == color;
-
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedColor = color;
-                  });
-                },
-
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-
-                  width: 32,
-                  height: 32,
-
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-
-                    border: selected
-                        ? Border.all(color: primaryTextColor, width: 2)
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedColor = color;
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    width: isSmallWidth ? 30 : 32,
+                    height: isSmallWidth ? 30 : 32,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: selected
+                          ? Border.all(color: primaryTextColor, width: 2)
+                          : null,
+                    ),
+                    child: selected
+                        ? Icon(
+                            Icons.check_rounded,
+                            size: isSmallWidth ? 16 : 18,
+                            color: Colors.white,
+                          )
                         : null,
                   ),
-
-                  child: selected
-                      ? const Icon(
-                          Icons.check_rounded,
-                          size: 18,
-                          color: Colors.white,
-                        )
-                      : null,
-                ),
-              );
-            }).toList(),
-          ),
-        ],
+                );
+              }).toList(),
+            ),
+          ],
+        ),
       ),
-
       actions: [
         TextButton(
           onPressed: () {
             FocusScope.of(context).unfocus();
-
             Navigator.of(context).pop();
           },
-
           child: Text(
             l10n.cancel,
             style: TextStyle(
               color: secondaryTextColor,
               fontWeight: FontWeight.w600,
+              fontSize: isSmallWidth ? 11 : 12,
             ),
           ),
         ),
-
         ElevatedButton(
           onPressed: _addCategory,
-
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.needthis,
             foregroundColor: Colors.white,
             elevation: 0,
-
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallWidth ? 12 : 16,
+              vertical: isSmallWidth ? 9 : 10,
+            ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(isSmallWidth ? 9 : 10),
             ),
           ),
-
           child: Text(
             l10n.addCategory,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: isSmallWidth ? 11 : 12,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ],

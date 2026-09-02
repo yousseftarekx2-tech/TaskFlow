@@ -8,10 +8,6 @@ class UserCubit extends Cubit<UserModel?> {
 
   UserCubit(this._userStorage) : super(null);
 
-  // ============================================================
-  // LOAD SESSION
-  // ============================================================
-
   Future<void> loadUser() async {
     final bool loggedIn = await _userStorage.isLoggedIn();
 
@@ -25,20 +21,12 @@ class UserCubit extends Cubit<UserModel?> {
     emit(user);
   }
 
-  // ============================================================
-  // REGISTER
-  // ============================================================
-
   Future<void> setUser(UserModel user) async {
     await _userStorage.saveUser(user);
     await _userStorage.setLoggedIn(true);
 
     emit(user);
   }
-
-  // ============================================================
-  // LOGIN
-  // ============================================================
 
   Future<bool> login({required String email, required String password}) async {
     final UserModel? user = await _userStorage.getUser();
@@ -62,29 +50,17 @@ class UserCubit extends Cubit<UserModel?> {
     return true;
   }
 
-  // ============================================================
-  // UPDATE USER
-  // ============================================================
-
   Future<void> updateUser(UserModel user) async {
     await _userStorage.saveUser(user);
 
     emit(user);
   }
 
-  // ============================================================
-  // LOGOUT
-  // ============================================================
-
   Future<void> logout() async {
     await _userStorage.logout();
 
     emit(null);
   }
-
-  // ============================================================
-  // DELETE ACCOUNT
-  // ============================================================
 
   Future<void> clearUser() async {
     await _userStorage.clearUser();

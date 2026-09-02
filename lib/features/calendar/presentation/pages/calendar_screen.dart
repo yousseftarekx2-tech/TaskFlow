@@ -3,6 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:task_flow/core/constants/app_colors.dart';
 import 'package:task_flow/l10n/app_localizations.dart';
+
+import 'package:task_flow/features/category/cubit/category_cubit.dart';
+import 'package:task_flow/features/category/data/model/category_model.dart';
+
 import 'package:task_flow/features/tasks/data/model/task_model.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_bloc.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_state.dart';
@@ -15,19 +19,26 @@ class CalenderScreen extends StatefulWidget {
 }
 
 class _WeekDay extends StatelessWidget {
-  const _WeekDay({required this.title, required this.isDark});
+  const _WeekDay({
+    required this.title,
+    required this.isDark,
+    required this.fontSize,
+  });
 
   final String title;
   final bool isDark;
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Text(
         title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         textAlign: TextAlign.center,
         style: TextStyle(
-          fontSize: 12,
+          fontSize: fontSize,
           fontWeight: FontWeight.w700,
           color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
         ),
@@ -38,6 +49,7 @@ class _WeekDay extends StatelessWidget {
 
 class _CalenderScreenState extends State<CalenderScreen> {
   DateTime _selectedDate = DateTime.now();
+
   String _weekDayName(String arabicOrEnglishName, String englishShortName) {
     final String languageCode = Localizations.localeOf(context).languageCode;
 
@@ -48,13 +60,21 @@ class _CalenderScreenState extends State<CalenderScreen> {
     return arabicOrEnglishName;
   }
 
+  Color _categoryColor(BuildContext context, String categoryName) {
+    final CategoryModel? category = context
+        .read<CategoryCubit>()
+        .getCategoryByName(categoryName);
+
+    return category?.color ?? AppColors.needthis;
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     final AppLocalizations l10n = AppLocalizations.of(context)!;
 
-    final state = context.watch<TaskBloc>().state;
+    final TaskState state = context.watch<TaskBloc>().state;
 
     final List<TaskModel> tasks = state is TaskLoaded
         ? state.tasks
@@ -67,40 +87,51 @@ class _CalenderScreenState extends State<CalenderScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(isDark, l10n),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isSmallWidth = constraints.maxWidth < 360;
+            final bool isShortHeight = constraints.maxHeight < 700;
 
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildCalendarCard(tasks, isDark, l10n),
+            final double horizontalPadding = isSmallWidth ? 16 : 20;
 
-                    const SizedBox(height: 24),
-
-                    _buildTasksHeader(tasks, isDark, l10n),
-
-                    const SizedBox(height: 12),
-
-                    _buildTasks(tasks, isDark, l10n),
-                  ],
+            return Column(
+              children: [
+                _buildHeader(isDark, l10n, isSmallWidth),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      isSmallWidth ? 8 : 10,
+                      horizontalPadding,
+                      30,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildCalendarCard(tasks, isDark, l10n, isSmallWidth),
+                        SizedBox(
+                          height: isShortHeight
+                              ? 20
+                              : isSmallWidth
+                              ? 22
+                              : 24,
+                        ),
+                        _buildTasksHeader(tasks, isDark, l10n, isSmallWidth),
+                        SizedBox(height: isSmallWidth ? 10 : 12),
+                        _buildTasks(tasks, isDark, l10n, isSmallWidth),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  // ------------------------------------------------------------
-  // Header
-  // ------------------------------------------------------------
-
-  Widget _buildHeader(bool isDark, AppLocalizations l10n) {
+  Widget _buildHeader(bool isDark, AppLocalizations l10n, bool isSmallWidth) {
     final Color primaryTextColor = isDark
         ? const Color(0xFFF8FAFC)
         : const Color(0xFF0F172A);
@@ -116,35 +147,49 @@ class _CalenderScreenState extends State<CalenderScreen> {
         : const Color(0xFFE2E8F0);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+      padding: EdgeInsets.fromLTRB(
+        isSmallWidth ? 16 : 20,
+        isSmallWidth ? 12 : 16,
+        isSmallWidth ? 16 : 20,
+        isSmallWidth ? 8 : 10,
+      ),
       child: Row(
         children: [
           Expanded(
             child: Text(
               l10n.calendar,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 24,
+                fontSize: isSmallWidth ? 22 : 24,
                 fontWeight: FontWeight.w800,
                 color: primaryTextColor,
               ),
             ),
           ),
-
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: cardColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: borderColor),
-            ),
-            child: IconButton(
-              onPressed: () {
-                setState(() {
-                  _selectedDate = DateTime.now();
-                });
-              },
-              icon: Icon(Icons.today_outlined, size: 20, color: iconColor),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: isSmallWidth ? 40 : 42,
+            height: isSmallWidth ? 40 : 42,
+            child: Container(
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: borderColor),
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  setState(() {
+                    _selectedDate = DateTime.now();
+                  });
+                },
+                icon: Icon(
+                  Icons.today_outlined,
+                  size: isSmallWidth ? 19 : 20,
+                  color: iconColor,
+                ),
+              ),
             ),
           ),
         ],
@@ -152,14 +197,11 @@ class _CalenderScreenState extends State<CalenderScreen> {
     );
   }
 
-  // ------------------------------------------------------------
-  // Calendar
-  // ------------------------------------------------------------
-
   Widget _buildCalendarCard(
     List<TaskModel> tasks,
     bool isDark,
     AppLocalizations l10n,
+    bool isSmallWidth,
   ) {
     final DateTime firstDay = DateTime(
       _selectedDate.year,
@@ -173,19 +215,6 @@ class _CalenderScreenState extends State<CalenderScreen> {
       0,
     ).day;
 
-    // Dart:
-    // Monday = 1
-    // Tuesday = 2
-    // ...
-    // Saturday = 6
-    // Sunday = 7
-    //
-    // We want:
-    // Saturday = first column
-    // Sunday = second column
-    // Monday = third column
-    //
-    // Therefore we shift the weekday so Saturday becomes 0.
     final int startingWeekday = (firstDay.weekday + 1) % 7;
 
     final Color cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
@@ -208,7 +237,12 @@ class _CalenderScreenState extends State<CalenderScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+      padding: EdgeInsets.fromLTRB(
+        isSmallWidth ? 10 : 16,
+        isSmallWidth ? 14 : 18,
+        isSmallWidth ? 10 : 16,
+        isSmallWidth ? 12 : 16,
+      ),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(18),
@@ -218,78 +252,111 @@ class _CalenderScreenState extends State<CalenderScreen> {
         children: [
           Row(
             children: [
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    _selectedDate = DateTime(
-                      _selectedDate.year,
-                      _selectedDate.month - 1,
-                      1,
-                    );
-                  });
-                },
-                icon: Icon(
-                  Icons.chevron_left_rounded,
-                  color: secondaryTextColor,
+              SizedBox(
+                width: 40,
+                height: 40,
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () {
+                    setState(() {
+                      _selectedDate = DateTime(
+                        _selectedDate.year,
+                        _selectedDate.month - 1,
+                        1,
+                      );
+                    });
+                  },
+                  icon: Icon(
+                    Icons.chevron_left_rounded,
+                    color: secondaryTextColor,
+                  ),
                 ),
               ),
-
               Expanded(
                 child: Text(
                   _monthName(_selectedDate.month, l10n),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 17,
+                    fontSize: isSmallWidth ? 16 : 17,
                     fontWeight: FontWeight.w800,
                     color: primaryTextColor,
                   ),
                 ),
               ),
-
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    _selectedDate = DateTime(
-                      _selectedDate.year,
-                      _selectedDate.month + 1,
-                      1,
-                    );
-                  });
-                },
-                icon: Icon(
-                  Icons.chevron_right_rounded,
-                  color: secondaryTextColor,
+              SizedBox(
+                width: 40,
+                height: 40,
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () {
+                    setState(() {
+                      _selectedDate = DateTime(
+                        _selectedDate.year,
+                        _selectedDate.month + 1,
+                        1,
+                      );
+                    });
+                  },
+                  icon: Icon(
+                    Icons.chevron_right_rounded,
+                    color: secondaryTextColor,
+                  ),
                 ),
               ),
             ],
           ),
-
-          const SizedBox(height: 12),
-
-          // Saturday → Sunday → Monday → Tuesday
-          // → Wednesday → Thursday → Friday
+          SizedBox(height: isSmallWidth ? 8 : 12),
           Row(
             children: [
-              _WeekDay(title: _weekDayName(l10n.sat, 'Sat'), isDark: isDark),
-              _WeekDay(title: _weekDayName(l10n.sun, 'Sun'), isDark: isDark),
-              _WeekDay(title: _weekDayName(l10n.mon, 'Mon'), isDark: isDark),
-              _WeekDay(title: _weekDayName(l10n.tue, 'Tue'), isDark: isDark),
-              _WeekDay(title: _weekDayName(l10n.wed, 'Wed'), isDark: isDark),
-              _WeekDay(title: _weekDayName(l10n.thu, 'Thu'), isDark: isDark),
-              _WeekDay(title: _weekDayName(l10n.fri, 'Fri'), isDark: isDark),
+              _WeekDay(
+                title: _weekDayName(l10n.sat, 'Sat'),
+                isDark: isDark,
+                fontSize: isSmallWidth ? 10 : 12,
+              ),
+              _WeekDay(
+                title: _weekDayName(l10n.sun, 'Sun'),
+                isDark: isDark,
+                fontSize: isSmallWidth ? 10 : 12,
+              ),
+              _WeekDay(
+                title: _weekDayName(l10n.mon, 'Mon'),
+                isDark: isDark,
+                fontSize: isSmallWidth ? 10 : 12,
+              ),
+              _WeekDay(
+                title: _weekDayName(l10n.tue, 'Tue'),
+                isDark: isDark,
+                fontSize: isSmallWidth ? 10 : 12,
+              ),
+              _WeekDay(
+                title: _weekDayName(l10n.wed, 'Wed'),
+                isDark: isDark,
+                fontSize: isSmallWidth ? 10 : 12,
+              ),
+              _WeekDay(
+                title: _weekDayName(l10n.thu, 'Thu'),
+                isDark: isDark,
+                fontSize: isSmallWidth ? 10 : 12,
+              ),
+              _WeekDay(
+                title: _weekDayName(l10n.fri, 'Fri'),
+                isDark: isDark,
+                fontSize: isSmallWidth ? 10 : 12,
+              ),
             ],
           ),
-
-          const SizedBox(height: 8),
-
+          SizedBox(height: isSmallWidth ? 6 : 8),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: startingWeekday + daysInMonth,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 4,
+              mainAxisSpacing: isSmallWidth ? 5 : 8,
+              crossAxisSpacing: isSmallWidth ? 2 : 4,
+              childAspectRatio: isSmallWidth ? 1.05 : 1,
             ),
             itemBuilder: (context, index) {
               if (index < startingWeekday) {
@@ -310,12 +377,17 @@ class _CalenderScreenState extends State<CalenderScreen> {
                   _selectedDate.month == firstDay.month &&
                   _selectedDate.year == firstDay.year;
 
-              final bool hasTask = tasks.any(
-                (task) =>
-                    task.scheduledAt.year == _selectedDate.year &&
+              final List<TaskModel> dayTasks = tasks.where((task) {
+                return task.scheduledAt.year == _selectedDate.year &&
                     task.scheduledAt.month == _selectedDate.month &&
-                    task.scheduledAt.day == day,
-              );
+                    task.scheduledAt.day == day;
+              }).toList();
+
+              final bool hasTask = dayTasks.isNotEmpty;
+
+              final Color taskCategoryColor = hasTask
+                  ? _categoryColor(context, dayTasks.first.category)
+                  : AppColors.needthis;
 
               return GestureDetector(
                 onTap: () {
@@ -341,7 +413,7 @@ class _CalenderScreenState extends State<CalenderScreen> {
                       Text(
                         '$day',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: isSmallWidth ? 12 : 13,
                           fontWeight: selected || isToday
                               ? FontWeight.w800
                               : FontWeight.w500,
@@ -352,15 +424,14 @@ class _CalenderScreenState extends State<CalenderScreen> {
                               : dayTextColor,
                         ),
                       ),
-
                       if (hasTask && !selected)
                         Positioned(
-                          bottom: 2,
+                          bottom: isSmallWidth ? 1 : 2,
                           child: Container(
-                            width: 4,
-                            height: 4,
+                            width: isSmallWidth ? 3.5 : 4,
+                            height: isSmallWidth ? 3.5 : 4,
                             decoration: BoxDecoration(
-                              color: AppColors.needthis,
+                              color: taskCategoryColor,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -376,14 +447,11 @@ class _CalenderScreenState extends State<CalenderScreen> {
     );
   }
 
-  // ------------------------------------------------------------
-  // Tasks Header
-  // ------------------------------------------------------------
-
   Widget _buildTasksHeader(
     List<TaskModel> tasks,
     bool isDark,
     AppLocalizations l10n,
+    bool isSmallWidth,
   ) {
     final List<TaskModel> selectedTasks = _tasksForSelectedDate(tasks);
 
@@ -391,25 +459,29 @@ class _CalenderScreenState extends State<CalenderScreen> {
         ? const Color(0xFFF8FAFC)
         : const Color(0xFF0F172A);
 
-    final Color secondaryTextColor = const Color(0xFF94A3B8);
+    const Color secondaryTextColor = Color(0xFF94A3B8);
 
     return Row(
       children: [
         Expanded(
           child: Text(
             l10n.tasks,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: isSmallWidth ? 17 : 18,
               fontWeight: FontWeight.w800,
               color: primaryTextColor,
             ),
           ),
         ),
-
+        const SizedBox(width: 8),
         Text(
           l10n.taskCount(selectedTasks.length),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: isSmallWidth ? 11 : 12,
             fontWeight: FontWeight.w600,
             color: secondaryTextColor,
           ),
@@ -418,14 +490,11 @@ class _CalenderScreenState extends State<CalenderScreen> {
     );
   }
 
-  // ------------------------------------------------------------
-  // Tasks
-  // ------------------------------------------------------------
-
   Widget _buildTasks(
     List<TaskModel> allTasks,
     bool isDark,
     AppLocalizations l10n,
+    bool isSmallWidth,
   ) {
     final List<TaskModel> tasks = _tasksForSelectedDate(allTasks);
 
@@ -438,7 +507,7 @@ class _CalenderScreenState extends State<CalenderScreen> {
     if (tasks.isEmpty) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 28),
+        padding: EdgeInsets.symmetric(vertical: isSmallWidth ? 24 : 28),
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16),
@@ -448,18 +517,22 @@ class _CalenderScreenState extends State<CalenderScreen> {
           children: [
             Icon(
               Icons.event_available_outlined,
-              size: 34,
+              size: isSmallWidth ? 30 : 34,
               color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
             ),
-
             const SizedBox(height: 8),
-
-            Text(
-              l10n.noTasksForThisDay,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF94A3B8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                l10n.noTasksForThisDay,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: isSmallWidth ? 12 : 13,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF94A3B8),
+                ),
               ),
             ),
           ],
@@ -474,19 +547,20 @@ class _CalenderScreenState extends State<CalenderScreen> {
           .map(
             (task) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: _buildTaskCard(task, isDark, l10n),
+              child: _buildTaskCard(task, isDark, l10n, isSmallWidth),
             ),
           )
           .toList(),
     );
   }
 
-  // ------------------------------------------------------------
-  // READ-ONLY TASK CARD
-  // ------------------------------------------------------------
-
-  Widget _buildTaskCard(TaskModel task, bool isDark, AppLocalizations l10n) {
-    final Color taskColor = _categoryColor(task.category);
+  Widget _buildTaskCard(
+    TaskModel task,
+    bool isDark,
+    AppLocalizations l10n,
+    bool isSmallWidth,
+  ) {
+    final Color taskColor = _categoryColor(context, task.category);
 
     final String taskTime = _formatTaskTime(task.scheduledAt);
 
@@ -496,7 +570,7 @@ class _CalenderScreenState extends State<CalenderScreen> {
         ? const Color(0xFF334155)
         : const Color(0xFFE2E8F0);
 
-    final Color titleColor = task.isCompleted
+    final Color titleColor = task.isCompleted || task.isOverdue
         ? const Color(0xFF64748B)
         : isDark
         ? const Color(0xFFF8FAFC)
@@ -512,20 +586,18 @@ class _CalenderScreenState extends State<CalenderScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(isSmallWidth ? 12 : 14),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor, width: 0.8),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // ======================================================
-          // STATUS
-          // ======================================================
           Container(
-            width: 40,
-            height: 40,
+            width: isSmallWidth ? 36 : 40,
+            height: isSmallWidth ? 36 : 40,
             decoration: BoxDecoration(
               color: task.isOverdue
                   ? (isDark ? const Color(0xFF450A0A) : const Color(0xFFFEF2F2))
@@ -540,7 +612,7 @@ class _CalenderScreenState extends State<CalenderScreen> {
                   : task.isCompleted
                   ? Icons.check_rounded
                   : Icons.schedule_rounded,
-              size: 23,
+              size: isSmallWidth ? 20 : 23,
               color: task.isOverdue
                   ? const Color(0xFFEF4444)
                   : task.isCompleted
@@ -548,12 +620,7 @@ class _CalenderScreenState extends State<CalenderScreen> {
                   : taskColor,
             ),
           ),
-
-          const SizedBox(width: 12),
-
-          // ======================================================
-          // TASK INFORMATION
-          // ======================================================
+          SizedBox(width: isSmallWidth ? 9 : 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -563,7 +630,7 @@ class _CalenderScreenState extends State<CalenderScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: isSmallWidth ? 14 : 16,
                     fontWeight: FontWeight.w800,
                     color: titleColor,
                     decoration: task.isCompleted
@@ -571,9 +638,7 @@ class _CalenderScreenState extends State<CalenderScreen> {
                         : TextDecoration.none,
                   ),
                 ),
-
                 const SizedBox(height: 5),
-
                 Row(
                   children: [
                     Container(
@@ -584,33 +649,32 @@ class _CalenderScreenState extends State<CalenderScreen> {
                         shape: BoxShape.circle,
                       ),
                     ),
-
                     const SizedBox(width: 5),
-
                     Flexible(
                       child: Text(
                         task.category,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: isSmallWidth ? 12 : 13,
                           fontWeight: FontWeight.w600,
                           color: secondaryTextColor,
                         ),
                       ),
                     ),
-
-                    const SizedBox(width: 8),
-
+                    SizedBox(width: isSmallWidth ? 5 : 8),
                     Icon(Icons.access_time_rounded, size: 13, color: timeColor),
-
                     const SizedBox(width: 3),
-
-                    Text(
-                      taskTime,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: timeColor,
+                    Flexible(
+                      child: Text(
+                        taskTime,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: isSmallWidth ? 10 : 11,
+                          fontWeight: FontWeight.w600,
+                          color: timeColor,
+                        ),
                       ),
                     ),
                   ],
@@ -618,47 +682,41 @@ class _CalenderScreenState extends State<CalenderScreen> {
               ],
             ),
           ),
-
-          const SizedBox(width: 8),
-
-          // ======================================================
-          // READ-ONLY STATUS
-          // ======================================================
-          if (task.isOverdue)
-            Text(
-              l10n.overdue,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFFEF4444),
-              ),
-            )
-          else if (task.isCompleted)
-            Text(
-              l10n.completed,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF16A34A),
-              ),
-            )
-          else
-            Text(
-              l10n.pending,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFFF97316),
-              ),
-            ),
+          SizedBox(width: isSmallWidth ? 8 : 12),
+          _buildStatusText(
+            task.isOverdue
+                ? l10n.overdue
+                : task.isCompleted
+                ? l10n.completed
+                : l10n.pending,
+            task.isOverdue
+                ? const Color(0xFFEF4444)
+                : task.isCompleted
+                ? const Color(0xFF16A34A)
+                : const Color(0xFFF97316),
+            isSmallWidth,
+          ),
         ],
       ),
     );
   }
 
-  // ------------------------------------------------------------
-  // Filter Tasks By Selected Date
-  // ------------------------------------------------------------
+  Widget _buildStatusText(String text, Color color, bool isSmallWidth) {
+    return SizedBox(
+      width: isSmallWidth ? 54 : 64,
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.right,
+        style: TextStyle(
+          fontSize: isSmallWidth ? 9 : 11,
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
+      ),
+    );
+  }
 
   List<TaskModel> _tasksForSelectedDate(List<TaskModel> tasks) {
     return tasks.where((task) {
@@ -668,84 +726,38 @@ class _CalenderScreenState extends State<CalenderScreen> {
     }).toList();
   }
 
-  // ------------------------------------------------------------
-  // Format Time
-  // ------------------------------------------------------------
-
   String _formatTaskTime(DateTime scheduledAt) {
     final TimeOfDay time = TimeOfDay.fromDateTime(scheduledAt);
 
     return time.format(context);
   }
 
-  // ------------------------------------------------------------
-  // Category Colors
-  // ------------------------------------------------------------
-
-  Color _categoryColor(String category) {
-    switch (category) {
-      case 'Design':
-        return const Color(0xFF2563EB);
-
-      case 'Meeting':
-        return const Color(0xFFF97316);
-
-      case 'Development':
-        return const Color(0xFF16A34A);
-
-      case 'Work':
-        return const Color(0xFF8B5CF6);
-
-      case 'Health':
-        return const Color(0xFF14B8A6);
-
-      default:
-        return AppColors.needthis;
-    }
-  }
-
-  // ------------------------------------------------------------
-  // Month Name
-  // ------------------------------------------------------------
-
   String _monthName(int month, AppLocalizations l10n) {
     switch (month) {
       case 1:
         return l10n.january;
-
       case 2:
         return l10n.february;
-
       case 3:
         return l10n.march;
-
       case 4:
         return l10n.april;
-
       case 5:
         return l10n.may;
-
       case 6:
         return l10n.june;
-
       case 7:
         return l10n.july;
-
       case 8:
         return l10n.august;
-
       case 9:
         return l10n.september;
-
       case 10:
         return l10n.october;
-
       case 11:
         return l10n.november;
-
       case 12:
         return l10n.december;
-
       default:
         return '';
     }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:task_flow/l10n/app_localizations.dart';
 
 import 'package:task_flow/core/constants/app_colors.dart';
-import 'package:task_flow/features/tasks/data/model/task_model.dart';
 import 'package:task_flow/features/settings/presnetation/cubit/settings_cubit.dart';
+import 'package:task_flow/features/tasks/data/model/task_model.dart';
+import 'package:task_flow/l10n/app_localizations.dart';
 
 class CategoryTasksScreen extends StatelessWidget {
   const CategoryTasksScreen({
@@ -20,16 +20,12 @@ class CategoryTasksScreen extends StatelessWidget {
     switch (categoryName) {
       case 'Design':
         return const Color(0xFF2563EB);
-
       case 'Meeting':
         return const Color(0xFFF97316);
-
       case 'Development':
         return const Color(0xFF16A34A);
-
       case 'Work':
         return const Color(0xFF8B5CF6);
-
       default:
         return AppColors.needthis;
     }
@@ -37,7 +33,18 @@ class CategoryTasksScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final Size screenSize = MediaQuery.sizeOf(context);
+
+    final bool isSmallWidth = screenSize.width < 360;
+    final bool isShortScreen = screenSize.height < 700;
+
+    final double horizontalPadding = isSmallWidth ? 14 : 20;
+    final double topPadding = isShortScreen ? 8 : 12;
+    final double bottomPadding = isShortScreen ? 20 : 30;
+    final double cardPadding = isSmallWidth ? 12 : 14;
+    final double statusSize = isSmallWidth ? 40 : 42;
+    final double statusIconSize = isSmallWidth ? 20 : 21;
 
     return BlocBuilder<SettingsCubit, SettingsState>(
       builder: (context, settingsState) {
@@ -63,40 +70,39 @@ class CategoryTasksScreen extends StatelessWidget {
             ? const Color(0xFF64748B)
             : const Color(0xFFCBD5E1);
 
-        final Color secondaryTextColor = const Color(0xFF94A3B8);
-
+        const Color secondaryTextColor = Color(0xFF94A3B8);
         final Color categoryColor = _categoryColor();
 
         return Scaffold(
           backgroundColor: backgroundColor,
-
           appBar: AppBar(
             backgroundColor: backgroundColor,
             elevation: 0,
             scrolledUnderElevation: 0,
             surfaceTintColor: Colors.transparent,
-
+            toolbarHeight: isSmallWidth ? 54 : 56,
+            leadingWidth: isSmallWidth ? 48 : 56,
             leading: IconButton(
               onPressed: () => Navigator.pop(context),
-
+              padding: EdgeInsets.zero,
               icon: Icon(
                 Icons.arrow_back_ios_new_rounded,
-                size: 20,
+                size: isSmallWidth ? 18 : 20,
                 color: primaryTextColor,
               ),
             ),
-
+            titleSpacing: isSmallWidth ? 0 : null,
             title: Text(
               categoryName,
-
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 21,
+                fontSize: isSmallWidth ? 19 : 21,
                 fontWeight: FontWeight.w800,
                 color: primaryTextColor,
               ),
             ),
           ),
-
           body: SafeArea(
             child: tasks.isEmpty
                 ? _buildEmptyState(
@@ -104,12 +110,16 @@ class CategoryTasksScreen extends StatelessWidget {
                     categoryColor,
                     primaryTextColor,
                     secondaryTextColor,
+                    isSmallWidth,
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
-
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      topPadding,
+                      horizontalPadding,
+                      bottomPadding,
+                    ),
                     itemCount: tasks.length,
-
                     itemBuilder: (context, index) {
                       return _buildTaskCard(
                         context,
@@ -121,6 +131,10 @@ class CategoryTasksScreen extends StatelessWidget {
                         primaryTextColor,
                         secondaryTextColor,
                         chevronColor,
+                        isSmallWidth,
+                        cardPadding,
+                        statusSize,
+                        statusIconSize,
                       );
                     },
                   ),
@@ -130,61 +144,55 @@ class CategoryTasksScreen extends StatelessWidget {
     );
   }
 
-  // ============================================================
-  // EMPTY STATE
-  // ============================================================
-
   Widget _buildEmptyState(
     AppLocalizations l10n,
     Color categoryColor,
     Color primaryTextColor,
     Color secondaryTextColor,
+    bool isSmallWidth,
   ) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40),
-
+      child: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(
+          horizontal: isSmallWidth ? 24 : 40,
+          vertical: 20,
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-
           children: [
             Container(
-              width: 72,
-              height: 72,
-
+              width: isSmallWidth ? 64 : 72,
+              height: isSmallWidth ? 64 : 72,
               decoration: BoxDecoration(
                 color: categoryColor.withValues(alpha: 0.10),
                 shape: BoxShape.circle,
               ),
-
               child: Icon(
                 Icons.task_alt_rounded,
-                size: 34,
+                size: isSmallWidth ? 30 : 34,
                 color: categoryColor,
               ),
             ),
-
-            const SizedBox(height: 18),
-
+            SizedBox(height: isSmallWidth ? 14 : 18),
             Text(
               l10n.categoryNoTasks(categoryName),
               textAlign: TextAlign.center,
-
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 18,
+                fontSize: isSmallWidth ? 17 : 18,
                 fontWeight: FontWeight.w700,
                 color: primaryTextColor,
               ),
             ),
-
-            const SizedBox(height: 8),
-
+            SizedBox(height: isSmallWidth ? 6 : 8),
             Text(
               l10n.categoryTasksDescription,
               textAlign: TextAlign.center,
-
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: isSmallWidth ? 12 : 13,
                 height: 1.5,
                 color: secondaryTextColor,
               ),
@@ -194,10 +202,6 @@ class CategoryTasksScreen extends StatelessWidget {
       ),
     );
   }
-
-  // ============================================================
-  // TASK CARD
-  // ============================================================
 
   Widget _buildTaskCard(
     BuildContext context,
@@ -209,6 +213,10 @@ class CategoryTasksScreen extends StatelessWidget {
     Color primaryTextColor,
     Color secondaryTextColor,
     Color chevronColor,
+    bool isSmallWidth,
+    double cardPadding,
+    double statusSize,
+    double statusIconSize,
   ) {
     final bool completed = task.isCompleted;
     final bool overdue = task.isOverdue;
@@ -219,51 +227,36 @@ class CategoryTasksScreen extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-
-      margin: const EdgeInsets.only(bottom: 10),
-
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-
+      margin: EdgeInsets.only(bottom: isSmallWidth ? 8 : 10),
+      padding: EdgeInsets.symmetric(
+        horizontal: cardPadding,
+        vertical: isSmallWidth ? 12 : 14,
+      ),
       decoration: BoxDecoration(
         color: cardColor,
-
-        borderRadius: BorderRadius.circular(16),
-
-        border: Border.all(
-          color: borderColor,
-          width: 0.7,
-        ),
+        borderRadius: BorderRadius.circular(isSmallWidth ? 14 : 16),
+        border: Border.all(color: borderColor, width: 0.7),
       ),
-
       child: Row(
         children: [
-          // ------------------------------------------------------
-          // STATUS
-          // ------------------------------------------------------
-
           Container(
-            width: 42,
-            height: 42,
-
+            width: statusSize,
+            height: statusSize,
             decoration: BoxDecoration(
               color: completed
                   ? AppColors.needthis.withValues(alpha: 0.10)
                   : overdue
                   ? Colors.red.withValues(alpha: 0.10)
                   : categoryColor.withValues(alpha: 0.10),
-
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(isSmallWidth ? 11 : 12),
             ),
-
             child: Icon(
               completed
                   ? Icons.check_rounded
                   : overdue
                   ? Icons.warning_amber_rounded
                   : Icons.task_alt_rounded,
-
-              size: 21,
-
+              size: statusIconSize,
               color: completed
                   ? AppColors.needthis
                   : overdue
@@ -271,57 +264,43 @@ class CategoryTasksScreen extends StatelessWidget {
                   : categoryColor,
             ),
           ),
-
-          const SizedBox(width: 13),
-
-          // ------------------------------------------------------
-          // TASK INFO
-          // ------------------------------------------------------
-
+          SizedBox(width: isSmallWidth ? 10 : 13),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-
               children: [
                 Text(
                   task.title,
-
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: isSmallWidth ? 13 : 14,
                     fontWeight: FontWeight.w700,
                     color: titleColor,
-
                     decoration: completed
                         ? TextDecoration.lineThrough
                         : TextDecoration.none,
                   ),
                 ),
-
-                const SizedBox(height: 6),
-
+                SizedBox(height: isSmallWidth ? 5 : 6),
                 Row(
                   children: [
                     Icon(
                       Icons.access_time_outlined,
-                      size: 14,
+                      size: isSmallWidth ? 13 : 14,
                       color: secondaryTextColor,
                     ),
-
-                    const SizedBox(width: 5),
-
-                    Text(
-                      _formatDateTime(
-                        task.scheduledAt,
-                        l10n,
-                      ),
-
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: secondaryTextColor,
+                    SizedBox(width: isSmallWidth ? 4 : 5),
+                    Expanded(
+                      child: Text(
+                        _formatDateTime(task.scheduledAt, l10n),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: isSmallWidth ? 10 : 11,
+                          fontWeight: FontWeight.w500,
+                          color: secondaryTextColor,
+                        ),
                       ),
                     ),
                   ],
@@ -329,20 +308,12 @@ class CategoryTasksScreen extends StatelessWidget {
               ],
             ),
           ),
-
-          const SizedBox(width: 10),
-
-          // ------------------------------------------------------
-          // STATUS DOT
-          // ------------------------------------------------------
-
+          SizedBox(width: isSmallWidth ? 8 : 10),
           Container(
             width: 8,
             height: 8,
-
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-
               color: completed
                   ? AppColors.needthis
                   : overdue
@@ -355,23 +326,12 @@ class CategoryTasksScreen extends StatelessWidget {
     );
   }
 
-  // ============================================================
-  // DATE FORMAT
-  // ============================================================
-
-  String _formatDateTime(
-    DateTime date,
-    AppLocalizations l10n,
-  ) {
+  String _formatDateTime(DateTime date, AppLocalizations l10n) {
     final int hour = date.hour;
 
-    final int displayHour = hour % 12 == 0
-        ? 12
-        : hour % 12;
+    final int displayHour = hour % 12 == 0 ? 12 : hour % 12;
 
-    final String period = hour >= 12
-        ? 'PM'
-        : 'AM';
+    final String period = hour >= 12 ? 'PM' : 'AM';
 
     return '${date.day.toString().padLeft(2, '0')}/'
         '${date.month.toString().padLeft(2, '0')}/'

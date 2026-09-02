@@ -2,14 +2,11 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:task_flow/features/category/data/model/category_model.dart';
 
 class CategoryStorage {
   static const String _categoriesKey = 'categories';
-
-  // ============================================================
-  // DEFAULT CATEGORIES
-  // ============================================================
 
   List<CategoryModel> defaultCategories() {
     return const [
@@ -44,45 +41,49 @@ class CategoryStorage {
     ];
   }
 
-  // ============================================================
-  // GET CATEGORIES
-  // ============================================================
-
   Future<List<CategoryModel>> getCategories() async {
-    final prefs = await SharedPreferences.getInstance();
-
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? data = prefs.getString(_categoriesKey);
 
     if (data == null) {
-      return defaultCategories();
+      final List<CategoryModel> defaults = defaultCategories();
+
+      await saveCategories(defaults);
+
+      return defaults;
     }
 
     try {
-      final List<dynamic> decoded = jsonDecode(data);
+      final List<dynamic> decoded = jsonDecode(data) as List<dynamic>;
 
-      return decoded.map((item) {
+      final List<CategoryModel> categories = decoded.map((item) {
+        final Map<String, dynamic> json = item as Map<String, dynamic>;
+
         return CategoryModel(
-          id: item['id'] as String,
-          name: item['name'] as String,
-          color: Color(item['color'] as int),
+          id: json['id'] as String,
+          name: json['name'] as String,
+          color: Color(json['color'] as int),
           icon: IconData(
-            item['iconCodePoint'] as int,
+            // ignore: non_const_argument_for_const_parameter
+            json['iconCodePoint'] as int,
             fontFamily: 'MaterialIcons',
           ),
-          isDefault: item['isDefault'] as bool,
+          isDefault: json['isDefault'] as bool,
         );
       }).toList();
+
+      return categories;
     } catch (_) {
-      return defaultCategories();
+      final List<CategoryModel> defaults = defaultCategories();
+
+      await saveCategories(defaults);
+
+      return defaults;
     }
   }
 
-  // ============================================================
-  // SAVE CATEGORIES
-  // ============================================================
-
   Future<void> saveCategories(List<CategoryModel> categories) async {
-    final prefs = await SharedPreferences.getInstance();
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
 
     final List<Map<String, dynamic>> data = categories.map((category) {
       return {
@@ -97,13 +98,13 @@ class CategoryStorage {
     await prefs.setString(_categoriesKey, jsonEncode(data));
   }
 
-  // ============================================================
-  // CLEAR
-  // ============================================================
-
   Future<void> clearCategories() async {
-    final prefs = await SharedPreferences.getInstance();
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
 
     await prefs.remove(_categoriesKey);
+  }
+
+  Future<void> clearAllCategories() async {
+    await clearCategories();
   }
 }

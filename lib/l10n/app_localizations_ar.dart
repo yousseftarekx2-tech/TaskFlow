@@ -78,7 +78,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get version => 'الإصدار 1.0.0';
 
   @override
-  String get createTask => 'إنشاء المهمة';
+  String get createTask => 'إنشاء مهمة';
 
   @override
   String get editTask => 'تعديل المهمة';
@@ -105,7 +105,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get add => 'إضافة';
 
   @override
-  String get noCategoriesYet => 'لا توجد فئات بعد';
+  String get noCategoriesYet => 'لا توجد تصنيفات بعد';
 
   @override
   String get date => 'التاريخ';
@@ -135,7 +135,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get taskCreatedSuccessfully => 'تم إنشاء المهمة بنجاح';
 
   @override
-  String get addCategory => 'إضافة';
+  String get addCategory => 'إضافة تصنيف';
 
   @override
   String get categoryName => 'اسم التصنيف';
@@ -336,7 +336,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get calendar => 'التقويم';
 
   @override
-  String get mon => 'الاثنين';
+  String get mon => 'الإثنين';
 
   @override
   String get tue => 'الثلاثاء';
@@ -357,7 +357,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sun => 'الأحد';
 
   @override
-  String get tasks => 'مهام';
+  String get tasks => 'المهام';
 
   @override
   String taskCount(int count) {
@@ -690,7 +690,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get close => 'إغلاق';
 
   @override
-  String get noUserDataFound => 'لم يتم العثور على بيانات المستخدم';
+  String get noUserDataFound => 'لا توجد بيانات للمستخدم';
 
   @override
   String get nameCannotBeEmpty => 'لا يمكن أن يكون الاسم فارغًا';
@@ -1083,4 +1083,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get lastUpdated => 'آخر تحديث: أغسطس 2026';
+
+  @override
+  String get deleteCategoryTitle => 'حذف التصنيف';
+
+  @override
+  String deleteCategoryMessage(Object categoryName) {
+    return 'هل أنت متأكد أنك تريد حذف \"$categoryName\"؟';
+  }
 }

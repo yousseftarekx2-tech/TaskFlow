@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:task_flow/core/routing/routes.dart';
 
+import 'package:task_flow/core/routing/routes.dart';
 import 'package:task_flow/l10n/app_localizations.dart';
 
 class HabitsScreen extends StatelessWidget {
@@ -12,6 +12,10 @@ class HabitsScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final bool isDark = theme.brightness == Brightness.dark;
+    final Size screenSize = MediaQuery.sizeOf(context);
+
+    final bool isSmallWidth = screenSize.width < 360;
+    final bool isShortScreen = screenSize.height < 700;
 
     final Color backgroundColor = isDark
         ? const Color(0xFF0F172A)
@@ -37,17 +41,18 @@ class HabitsScreen extends StatelessWidget {
         ? const Color(0xFF818CF8)
         : const Color(0xFF6366F1);
 
+    final double horizontalPadding = isSmallWidth ? 16 : 20;
+    final double bodyBottomPadding = isShortScreen ? 20 : 30;
+
     return Scaffold(
       backgroundColor: backgroundColor,
-
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-
         leading: Container(
-          margin: const EdgeInsets.all(6),
+          margin: EdgeInsets.all(isSmallWidth ? 7 : 6),
           decoration: BoxDecoration(
             color: cardColor,
             shape: BoxShape.circle,
@@ -58,34 +63,33 @@ class HabitsScreen extends StatelessWidget {
             padding: EdgeInsets.zero,
             icon: Icon(
               Icons.arrow_back_ios_new_rounded,
-              size: 17,
+              size: isSmallWidth ? 16 : 17,
               color: primaryTextColor,
             ),
           ),
         ),
-
         title: Text(
           l10n.habits,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 22,
+            fontSize: isSmallWidth ? 20 : 22,
             fontWeight: FontWeight.w800,
             color: primaryTextColor,
           ),
         ),
-
         centerTitle: true,
       ),
-
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
-
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
+          isShortScreen ? 8 : 12,
+          horizontalPadding,
+          bodyBottomPadding,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-
           children: [
-            // ==========================================================
-            // INTRO
-            // ==========================================================
             _buildInfoCard(
               icon: Icons.track_changes_outlined,
               title: l10n.habits,
@@ -96,60 +100,50 @@ class HabitsScreen extends StatelessWidget {
               iconColor: iconColor,
               primaryTextColor: primaryTextColor,
               secondaryTextColor: secondaryTextColor,
+              isSmallWidth: isSmallWidth,
             ),
-
-            const SizedBox(height: 20),
-
-            // ==========================================================
-            // COMING SOON
-            // ==========================================================
+            SizedBox(height: isShortScreen ? 16 : 20),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
-
+              padding: EdgeInsets.all(isSmallWidth ? 16 : 20),
               decoration: BoxDecoration(
                 color: cardColor,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: borderColor, width: 0.7),
               ),
-
               child: Column(
                 children: [
                   Container(
-                    width: 64,
-                    height: 64,
-
+                    width: isSmallWidth ? 58 : 64,
+                    height: isSmallWidth ? 58 : 64,
                     decoration: BoxDecoration(
                       color: iconBackgroundColor,
                       shape: BoxShape.circle,
                     ),
-
                     child: Icon(
                       Icons.auto_graph_rounded,
-                      size: 30,
+                      size: isSmallWidth ? 27 : 30,
                       color: iconColor,
                     ),
                   ),
-
-                  const SizedBox(height: 16),
-
+                  SizedBox(height: isShortScreen ? 12 : 16),
                   Text(
                     l10n.habitsComingSoon,
                     textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 17,
+                      fontSize: isSmallWidth ? 16 : 17,
                       fontWeight: FontWeight.w800,
                       color: primaryTextColor,
                     ),
                   ),
-
                   const SizedBox(height: 8),
-
                   Text(
                     l10n.habitsComingSoonDescription,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: isSmallWidth ? 11 : 12,
                       height: 1.6,
                       fontWeight: FontWeight.w500,
                       color: secondaryTextColor,
@@ -164,10 +158,6 @@ class HabitsScreen extends StatelessWidget {
     );
   }
 
-  // ============================================================
-  // INFO CARD
-  // ============================================================
-
   Widget _buildInfoCard({
     required IconData icon,
     required String title,
@@ -178,57 +168,48 @@ class HabitsScreen extends StatelessWidget {
     required Color iconColor,
     required Color primaryTextColor,
     required Color secondaryTextColor,
+    required bool isSmallWidth,
   }) {
     return Container(
       width: double.infinity,
-
-      padding: const EdgeInsets.all(16),
-
+      padding: EdgeInsets.all(isSmallWidth ? 14 : 16),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
-
         border: Border.all(color: borderColor, width: 0.7),
       ),
-
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-
         children: [
           Container(
-            width: 44,
-            height: 44,
-
+            width: isSmallWidth ? 40 : 44,
+            height: isSmallWidth ? 40 : 44,
             decoration: BoxDecoration(
               color: iconBackgroundColor,
               borderRadius: BorderRadius.circular(12),
             ),
-
-            child: Icon(icon, color: iconColor, size: 22),
+            child: Icon(icon, color: iconColor, size: isSmallWidth ? 20 : 22),
           ),
-
-          const SizedBox(width: 14),
-
+          SizedBox(width: isSmallWidth ? 10 : 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-
               children: [
                 Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: isSmallWidth ? 13 : 14,
                     fontWeight: FontWeight.w800,
                     color: primaryTextColor,
                   ),
                 ),
-
                 const SizedBox(height: 6),
-
                 Text(
                   description,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: isSmallWidth ? 10 : 11,
                     height: 1.5,
                     fontWeight: FontWeight.w500,
                     color: secondaryTextColor,

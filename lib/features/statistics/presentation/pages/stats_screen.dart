@@ -2,13 +2,15 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:task_flow/l10n/app_localizations.dart';
 
 import 'package:task_flow/core/constants/app_colors.dart';
+import 'package:task_flow/features/category/cubit/category_cubit.dart';
+import 'package:task_flow/features/category/data/model/category_model.dart';
 import 'package:task_flow/features/settings/presnetation/cubit/settings_cubit.dart';
 import 'package:task_flow/features/tasks/data/model/task_model.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_bloc.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_state.dart';
+import 'package:task_flow/l10n/app_localizations.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
@@ -29,11 +31,14 @@ class _StatsScreenState extends State<StatsScreen> {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final SettingsState settingsState = context.watch<SettingsCubit>().state;
 
-    final settingsState = context.watch<SettingsCubit>().state;
     final bool isDarkMode = settingsState.darkModeEnabled;
+    final TaskState taskState = context.watch<TaskBloc>().state;
 
-    final taskState = context.watch<TaskBloc>().state;
+    final Size screenSize = MediaQuery.sizeOf(context);
+    final bool isSmallWidth = screenSize.width < 360;
+    final bool isShortScreen = screenSize.height < 700;
 
     final List<TaskModel> allTasks = taskState is TaskLoaded
         ? taskState.tasks
@@ -67,18 +72,19 @@ class _StatsScreenState extends State<StatsScreen> {
           : const Color(0xFFF8FAFC),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
+          padding: EdgeInsets.fromLTRB(
+            isSmallWidth ? 16 : 20,
+            isShortScreen ? 12 : 16,
+            isSmallWidth ? 16 : 20,
+            isShortScreen ? 20 : 30,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(isDarkMode, l10n),
-
-              const SizedBox(height: 18),
-
-              _buildPeriodSelector(isDarkMode, l10n),
-
-              const SizedBox(height: 18),
-
+              _buildHeader(isDarkMode, l10n, isSmallWidth),
+              SizedBox(height: isShortScreen ? 14 : 18),
+              _buildPeriodSelector(isDarkMode, l10n, isSmallWidth),
+              SizedBox(height: isShortScreen ? 14 : 18),
               _buildSummaryGrid(
                 totalTasks: totalTasks,
                 completedTasks: completedTasks,
@@ -86,10 +92,9 @@ class _StatsScreenState extends State<StatsScreen> {
                 overdueTasks: overdueTasks,
                 isDarkMode: isDarkMode,
                 l10n: l10n,
+                isSmallWidth: isSmallWidth,
               ),
-
-              const SizedBox(height: 18),
-
+              SizedBox(height: isShortScreen ? 14 : 18),
               _buildCompletionOverview(
                 totalTasks: totalTasks,
                 completedTasks: completedTasks,
@@ -97,24 +102,31 @@ class _StatsScreenState extends State<StatsScreen> {
                 overdueTasks: overdueTasks,
                 isDarkMode: isDarkMode,
                 l10n: l10n,
+                isSmallWidth: isSmallWidth,
               ),
-
-              const SizedBox(height: 18),
-
-              _buildWeeklyProductivity(allTasks, isDarkMode, l10n),
-
-              const SizedBox(height: 18),
-
-              _buildCategories(filteredTasks, isDarkMode, l10n),
-
-              const SizedBox(height: 18),
-
+              SizedBox(height: isShortScreen ? 14 : 18),
+              _buildWeeklyProductivity(
+                allTasks,
+                isDarkMode,
+                l10n,
+                isSmallWidth,
+              ),
+              SizedBox(height: isShortScreen ? 14 : 18),
+              _buildCategories(
+                context,
+                filteredTasks,
+                isDarkMode,
+                l10n,
+                isSmallWidth,
+              ),
+              SizedBox(height: isShortScreen ? 14 : 18),
               _buildInsights(
                 filteredTasks,
                 completionRate,
                 currentStreak,
                 isDarkMode,
                 l10n,
+                isSmallWidth,
               ),
             ],
           ),
@@ -123,18 +135,20 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
-  // ============================================================
-  // HEADER
-  // ============================================================
-
-  Widget _buildHeader(bool isDarkMode, AppLocalizations l10n) {
+  Widget _buildHeader(
+    bool isDarkMode,
+    AppLocalizations l10n,
+    bool isSmallWidth,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           l10n.statistics,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 25,
+            fontSize: isSmallWidth ? 22 : 25,
             fontWeight: FontWeight.w800,
             color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
           ),
@@ -142,39 +156,50 @@ class _StatsScreenState extends State<StatsScreen> {
         const SizedBox(height: 4),
         Text(
           l10n.trackYourProductivity,
-          style: const TextStyle(
-            fontSize: 13,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: isSmallWidth ? 12 : 13,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF94A3B8),
+            color: const Color(0xFF94A3B8),
           ),
         ),
       ],
     );
   }
 
-  // ============================================================
-  // PERIOD SELECTOR
-  // ============================================================
-
-  Widget _buildPeriodSelector(bool isDarkMode, AppLocalizations l10n) {
+  Widget _buildPeriodSelector(
+    bool isDarkMode,
+    AppLocalizations l10n,
+    bool isSmallWidth,
+  ) {
     return Row(
       children: [
-        _periodButton(
-          title: l10n.week,
-          period: StatsPeriod.week,
-          isDarkMode: isDarkMode,
+        Expanded(
+          child: _periodButton(
+            title: l10n.week,
+            period: StatsPeriod.week,
+            isDarkMode: isDarkMode,
+            isSmallWidth: isSmallWidth,
+          ),
         ),
-        const SizedBox(width: 8),
-        _periodButton(
-          title: l10n.month,
-          period: StatsPeriod.month,
-          isDarkMode: isDarkMode,
+        SizedBox(width: isSmallWidth ? 6 : 8),
+        Expanded(
+          child: _periodButton(
+            title: l10n.month,
+            period: StatsPeriod.month,
+            isDarkMode: isDarkMode,
+            isSmallWidth: isSmallWidth,
+          ),
         ),
-        const SizedBox(width: 8),
-        _periodButton(
-          title: l10n.year,
-          period: StatsPeriod.year,
-          isDarkMode: isDarkMode,
+        SizedBox(width: isSmallWidth ? 6 : 8),
+        Expanded(
+          child: _periodButton(
+            title: l10n.year,
+            period: StatsPeriod.year,
+            isDarkMode: isDarkMode,
+            isSmallWidth: isSmallWidth,
+          ),
         ),
       ],
     );
@@ -184,6 +209,7 @@ class _StatsScreenState extends State<StatsScreen> {
     required String title,
     required StatsPeriod period,
     required bool isDarkMode,
+    required bool isSmallWidth,
   }) {
     final bool selected = _selectedPeriod == period;
 
@@ -195,7 +221,11 @@ class _StatsScreenState extends State<StatsScreen> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 7),
+        padding: EdgeInsets.symmetric(
+          horizontal: isSmallWidth ? 8 : 15,
+          vertical: isSmallWidth ? 7 : 8,
+        ),
+        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: selected
               ? AppColors.needthis
@@ -213,8 +243,11 @@ class _StatsScreenState extends State<StatsScreen> {
         ),
         child: Text(
           title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 11,
+            fontSize: isSmallWidth ? 10 : 11,
             fontWeight: FontWeight.w700,
             color: selected
                 ? Colors.white
@@ -227,10 +260,6 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
-  // ============================================================
-  // SUMMARY
-  // ============================================================
-
   Widget _buildSummaryGrid({
     required int totalTasks,
     required int completedTasks,
@@ -238,14 +267,15 @@ class _StatsScreenState extends State<StatsScreen> {
     required int overdueTasks,
     required bool isDarkMode,
     required AppLocalizations l10n,
+    required bool isSmallWidth,
   }) {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.7,
+      crossAxisSpacing: isSmallWidth ? 9 : 12,
+      mainAxisSpacing: isSmallWidth ? 9 : 12,
+      childAspectRatio: isSmallWidth ? 1.55 : 1.7,
       children: [
         _summaryCard(
           title: l10n.totalTasks,
@@ -253,6 +283,7 @@ class _StatsScreenState extends State<StatsScreen> {
           icon: Icons.checklist_rounded,
           iconColor: AppColors.needthis,
           isDarkMode: isDarkMode,
+          isSmallWidth: isSmallWidth,
         ),
         _summaryCard(
           title: l10n.completed,
@@ -260,6 +291,7 @@ class _StatsScreenState extends State<StatsScreen> {
           icon: Icons.check_circle_outline_rounded,
           iconColor: _completedColor,
           isDarkMode: isDarkMode,
+          isSmallWidth: isSmallWidth,
         ),
         _summaryCard(
           title: l10n.pending,
@@ -267,6 +299,7 @@ class _StatsScreenState extends State<StatsScreen> {
           icon: Icons.schedule_rounded,
           iconColor: _pendingColor,
           isDarkMode: isDarkMode,
+          isSmallWidth: isSmallWidth,
         ),
         _summaryCard(
           title: l10n.overdue,
@@ -274,6 +307,7 @@ class _StatsScreenState extends State<StatsScreen> {
           icon: Icons.warning_amber_rounded,
           iconColor: _overdueColor,
           isDarkMode: isDarkMode,
+          isSmallWidth: isSmallWidth,
         ),
       ],
     );
@@ -285,9 +319,10 @@ class _StatsScreenState extends State<StatsScreen> {
     required IconData icon,
     required Color iconColor,
     required bool isDarkMode,
+    required bool isSmallWidth,
   }) {
     return Container(
-      padding: const EdgeInsets.all(13),
+      padding: EdgeInsets.all(isSmallWidth ? 11 : 13),
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(14),
@@ -299,12 +334,14 @@ class _StatsScreenState extends State<StatsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 19, color: iconColor),
+          Icon(icon, size: isSmallWidth ? 18 : 19, color: iconColor),
           const Spacer(),
           Text(
             '$value',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: isSmallWidth ? 18 : 20,
               fontWeight: FontWeight.w900,
               color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
             ),
@@ -312,20 +349,18 @@ class _StatsScreenState extends State<StatsScreen> {
           const SizedBox(height: 1),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 10,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: isSmallWidth ? 9 : 10,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF94A3B8),
+              color: const Color(0xFF94A3B8),
             ),
           ),
         ],
       ),
     );
   }
-
-  // ============================================================
-  // COMPLETION OVERVIEW
-  // ============================================================
 
   Widget _buildCompletionOverview({
     required int totalTasks,
@@ -334,6 +369,7 @@ class _StatsScreenState extends State<StatsScreen> {
     required int overdueTasks,
     required bool isDarkMode,
     required AppLocalizations l10n,
+    required bool isSmallWidth,
   }) {
     final double completionRate = totalTasks == 0
         ? 0
@@ -341,22 +377,27 @@ class _StatsScreenState extends State<StatsScreen> {
 
     final int percentage = (completionRate * 100).round();
 
+    final double chartSize = isSmallWidth ? 125 : 150;
+
     return _sectionCard(
       title: l10n.completionOverview,
       isDarkMode: isDarkMode,
+      isSmallWidth: isSmallWidth,
       child: Center(
         child: Column(
           children: [
             const SizedBox(height: 8),
-
             SizedBox(
-              width: 150,
-              height: 150,
+              width: chartSize,
+              height: chartSize,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   CustomPaint(
-                    size: const Size(110, 110),
+                    size: Size(
+                      isSmallWidth ? 100 : 110,
+                      isSmallWidth ? 100 : 110,
+                    ),
                     painter: _TaskStatusChartPainter(
                       completed: completedTasks,
                       pending: pendingTasks,
@@ -366,14 +407,13 @@ class _StatsScreenState extends State<StatsScreen> {
                           : const Color(0xFFE2E8F0),
                     ),
                   ),
-
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         '$percentage%',
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: isSmallWidth ? 18 : 20,
                           fontWeight: FontWeight.w900,
                           color: isDarkMode
                               ? Colors.white
@@ -383,10 +423,12 @@ class _StatsScreenState extends State<StatsScreen> {
                       const SizedBox(height: 2),
                       Text(
                         l10n.completed,
-                        style: const TextStyle(
-                          fontSize: 9,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: isSmallWidth ? 8 : 9,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF94A3B8),
+                          color: const Color(0xFF94A3B8),
                         ),
                       ),
                     ],
@@ -394,12 +436,10 @@ class _StatsScreenState extends State<StatsScreen> {
                 ],
               ),
             ),
-
             const SizedBox(height: 12),
-
             Wrap(
               alignment: WrapAlignment.center,
-              spacing: 14,
+              spacing: isSmallWidth ? 10 : 14,
               runSpacing: 8,
               children: [
                 _legendItem(
@@ -408,6 +448,7 @@ class _StatsScreenState extends State<StatsScreen> {
                   value: completedTasks,
                   total: totalTasks,
                   isDarkMode: isDarkMode,
+                  isSmallWidth: isSmallWidth,
                 ),
                 _legendItem(
                   color: _pendingColor,
@@ -415,6 +456,7 @@ class _StatsScreenState extends State<StatsScreen> {
                   value: pendingTasks,
                   total: totalTasks,
                   isDarkMode: isDarkMode,
+                  isSmallWidth: isSmallWidth,
                 ),
                 _legendItem(
                   color: _overdueColor,
@@ -422,6 +464,7 @@ class _StatsScreenState extends State<StatsScreen> {
                   value: overdueTasks,
                   total: totalTasks,
                   isDarkMode: isDarkMode,
+                  isSmallWidth: isSmallWidth,
                 ),
               ],
             ),
@@ -437,6 +480,7 @@ class _StatsScreenState extends State<StatsScreen> {
     required int value,
     required int total,
     required bool isDarkMode,
+    required bool isSmallWidth,
   }) {
     final int percentage = total == 0 ? 0 : ((value / total) * 100).round();
 
@@ -451,8 +495,10 @@ class _StatsScreenState extends State<StatsScreen> {
         const SizedBox(width: 5),
         Text(
           '$title $percentage%',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 10,
+            fontSize: isSmallWidth ? 9 : 10,
             fontWeight: FontWeight.w700,
             color: isDarkMode
                 ? const Color(0xFFCBD5E1)
@@ -463,18 +509,13 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
-  // ============================================================
-  // WEEKLY PRODUCTIVITY
-  // SATURDAY -> FRIDAY
-  // ============================================================
-
   Widget _buildWeeklyProductivity(
     List<TaskModel> allTasks,
     bool isDarkMode,
     AppLocalizations l10n,
+    bool isSmallWidth,
   ) {
     final DateTime now = DateTime.now();
-
     final DateTime startOfWeek = _getStartOfWeek(now);
 
     final List<String> days = [
@@ -510,11 +551,12 @@ class _StatsScreenState extends State<StatsScreen> {
       title: l10n.weeklyProductivity,
       subtitle: l10n.tasksCompletedPerDay,
       isDarkMode: isDarkMode,
+      isSmallWidth: isSmallWidth,
       child: Column(
         children: [
           const SizedBox(height: 18),
           SizedBox(
-            height: 145,
+            height: isSmallWidth ? 135 : 145,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: List.generate(7, (index) {
@@ -526,8 +568,10 @@ class _StatsScreenState extends State<StatsScreen> {
                     children: [
                       Text(
                         '$value',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 9,
+                          fontSize: isSmallWidth ? 8 : 9,
                           fontWeight: FontWeight.w700,
                           color: isDarkMode
                               ? const Color(0xFFCBD5E1)
@@ -537,7 +581,7 @@ class _StatsScreenState extends State<StatsScreen> {
                       const SizedBox(height: 5),
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 250),
-                        width: 9,
+                        width: isSmallWidth ? 8 : 9,
                         height: maxValue == 0 ? 4 : (value / maxValue) * 85,
                         decoration: BoxDecoration(
                           color: AppColors.needthis,
@@ -547,10 +591,13 @@ class _StatsScreenState extends State<StatsScreen> {
                       const SizedBox(height: 7),
                       Text(
                         days[index],
-                        style: const TextStyle(
-                          fontSize: 9,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: isSmallWidth ? 8 : 9,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF94A3B8),
+                          color: const Color(0xFF94A3B8),
                         ),
                       ),
                     ],
@@ -564,14 +611,12 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
-  // ============================================================
-  // CATEGORIES
-  // ============================================================
-
   Widget _buildCategories(
+    BuildContext context,
     List<TaskModel> tasks,
     bool isDarkMode,
     AppLocalizations l10n,
+    bool isSmallWidth,
   ) {
     final Map<String, int> categoryCounts = {};
 
@@ -588,12 +633,15 @@ class _StatsScreenState extends State<StatsScreen> {
       return _sectionCard(
         title: l10n.categories,
         isDarkMode: isDarkMode,
+        isSmallWidth: isSmallWidth,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Text(
             l10n.noCategoryDataAvailable,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: isSmallWidth ? 10 : 11,
               fontWeight: FontWeight.w600,
               color: isDarkMode
                   ? const Color(0xFF64748B)
@@ -607,12 +655,11 @@ class _StatsScreenState extends State<StatsScreen> {
     return _sectionCard(
       title: l10n.categories,
       isDarkMode: isDarkMode,
+      isSmallWidth: isSmallWidth,
       child: Column(
         children: categories.take(5).map((entry) {
-          final Color color = _categoryColor(entry.key);
-
+          final Color color = _categoryColor(context, entry.key);
           final int maxCount = categories.first.value;
-
           final double progress = maxCount == 0 ? 0 : entry.value / maxCount;
 
           return Padding(
@@ -627,16 +674,15 @@ class _StatsScreenState extends State<StatsScreen> {
                     shape: BoxShape.circle,
                   ),
                 ),
-
                 const SizedBox(width: 8),
-
                 SizedBox(
-                  width: 72,
+                  width: isSmallWidth ? 58 : 72,
                   child: Text(
                     entry.key,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: isSmallWidth ? 10 : 11,
                       fontWeight: FontWeight.w600,
                       color: isDarkMode
                           ? const Color(0xFFCBD5E1)
@@ -644,9 +690,7 @@ class _StatsScreenState extends State<StatsScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(width: 8),
-
                 Expanded(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
@@ -660,17 +704,20 @@ class _StatsScreenState extends State<StatsScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(width: 8),
-
-                Text(
-                  '${entry.value} ${l10n.tasks}',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                    color: isDarkMode
-                        ? const Color(0xFF94A3B8)
-                        : const Color(0xFF64748B),
+                Flexible(
+                  child: Text(
+                    '${entry.value} ${l10n.tasks}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: TextStyle(
+                      fontSize: isSmallWidth ? 8 : 9,
+                      fontWeight: FontWeight.w600,
+                      color: isDarkMode
+                          ? const Color(0xFF94A3B8)
+                          : const Color(0xFF64748B),
+                    ),
                   ),
                 ),
               ],
@@ -681,16 +728,13 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
-  // ============================================================
-  // INSIGHTS
-  // ============================================================
-
   Widget _buildInsights(
     List<TaskModel> tasks,
     double completionRate,
     int currentStreak,
     bool isDarkMode,
     AppLocalizations l10n,
+    bool isSmallWidth,
   ) {
     String mostProductiveDay = '—';
     String topCategory = '—';
@@ -699,7 +743,9 @@ class _StatsScreenState extends State<StatsScreen> {
       final Map<int, int> dayCounts = {};
 
       for (final task in tasks) {
-        if (!task.isCompleted) continue;
+        if (!task.isCompleted) {
+          continue;
+        }
 
         final int weekday = task.scheduledAt.weekday;
 
@@ -730,11 +776,12 @@ class _StatsScreenState extends State<StatsScreen> {
     return _sectionCard(
       title: l10n.insights,
       isDarkMode: isDarkMode,
+      isSmallWidth: isSmallWidth,
       child: GridView.count(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         crossAxisCount: 2,
-        childAspectRatio: 2.2,
+        childAspectRatio: isSmallWidth ? 1.8 : 2.2,
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
         children: [
@@ -744,30 +791,31 @@ class _StatsScreenState extends State<StatsScreen> {
             value: mostProductiveDay,
             color: const Color(0xFFF59E0B),
             isDarkMode: isDarkMode,
+            isSmallWidth: isSmallWidth,
           ),
-
           _insightItem(
             icon: Icons.category_outlined,
             title: l10n.topCategory,
             value: topCategory,
             color: AppColors.needthis,
             isDarkMode: isDarkMode,
+            isSmallWidth: isSmallWidth,
           ),
-
           _insightItem(
             icon: Icons.check_circle_outline_rounded,
             title: l10n.completion,
             value: '${(completionRate * 100).round()}%',
             color: _completedColor,
             isDarkMode: isDarkMode,
+            isSmallWidth: isSmallWidth,
           ),
-
           _insightItem(
             icon: Icons.local_fire_department_outlined,
             title: l10n.currentStreak,
             value: '$currentStreak ${l10n.days}',
             color: _pendingColor,
             isDarkMode: isDarkMode,
+            isSmallWidth: isSmallWidth,
           ),
         ],
       ),
@@ -780,19 +828,18 @@ class _StatsScreenState extends State<StatsScreen> {
     required String value,
     required Color color,
     required bool isDarkMode,
+    required bool isSmallWidth,
   }) {
     return Container(
-      padding: const EdgeInsets.all(9),
+      padding: EdgeInsets.all(isSmallWidth ? 8 : 9),
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 23, color: color),
-
-          const SizedBox(width: 7),
-
+          Icon(icon, size: isSmallWidth ? 20 : 23, color: color),
+          SizedBox(width: isSmallWidth ? 5 : 7),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -802,21 +849,19 @@ class _StatsScreenState extends State<StatsScreen> {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12,
+                  style: TextStyle(
+                    fontSize: isSmallWidth ? 10 : 12,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF94A3B8),
+                    color: const Color(0xFF94A3B8),
                   ),
                 ),
-
                 const SizedBox(height: 2),
-
                 Text(
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: isSmallWidth ? 10 : 11,
                     fontWeight: FontWeight.w800,
                     color: isDarkMode ? Colors.white : const Color(0xFF334155),
                   ),
@@ -829,19 +874,16 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
-  // ============================================================
-  // SECTION CARD
-  // ============================================================
-
   Widget _sectionCard({
     required String title,
     String? subtitle,
     required Widget child,
     required bool isDarkMode,
+    required bool isSmallWidth,
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      padding: EdgeInsets.all(isSmallWidth ? 12 : 14),
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -855,35 +897,32 @@ class _StatsScreenState extends State<StatsScreen> {
         children: [
           Text(
             title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 17,
+              fontSize: isSmallWidth ? 15 : 17,
               fontWeight: FontWeight.w800,
               color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
             ),
           ),
-
           if (subtitle != null) ...[
             const SizedBox(height: 2),
-
             Text(
               subtitle,
-              style: const TextStyle(
-                fontSize: 10,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: isSmallWidth ? 9 : 10,
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF94A3B8),
+                color: const Color(0xFF94A3B8),
               ),
             ),
           ],
-
           child,
         ],
       ),
     );
   }
-
-  // ============================================================
-  // FILTER
-  // ============================================================
 
   List<TaskModel> _filterTasks(List<TaskModel> tasks) {
     final DateTime now = DateTime.now();
@@ -891,7 +930,6 @@ class _StatsScreenState extends State<StatsScreen> {
     switch (_selectedPeriod) {
       case StatsPeriod.week:
         final DateTime start = _getStartOfWeek(now);
-
         final DateTime end = start.add(const Duration(days: 7));
 
         return tasks.where((task) {
@@ -912,10 +950,6 @@ class _StatsScreenState extends State<StatsScreen> {
     }
   }
 
-  // ============================================================
-  // WEEK START = SATURDAY
-  // ============================================================
-
   DateTime _getStartOfWeek(DateTime date) {
     final DateTime today = DateTime(date.year, date.month, date.day);
 
@@ -924,15 +958,13 @@ class _StatsScreenState extends State<StatsScreen> {
     return today.subtract(Duration(days: daysSinceSaturday));
   }
 
-  // ============================================================
-  // CURRENT STREAK
-  // ============================================================
-
   int _calculateCurrentStreak(List<TaskModel> tasks) {
     final Set<DateTime> completedDays = {};
 
     for (final task in tasks) {
-      if (!task.isCompleted) continue;
+      if (!task.isCompleted) {
+        continue;
+      }
 
       final DateTime day = DateTime(
         task.scheduledAt.year,
@@ -971,78 +1003,41 @@ class _StatsScreenState extends State<StatsScreen> {
 
     while (completedDays.contains(currentDay)) {
       streak++;
-
       currentDay = currentDay.subtract(const Duration(days: 1));
     }
 
     return streak;
   }
 
-  // ============================================================
-  // WEEKDAY NAME
-  // ============================================================
-
   String _weekdayName(int weekday, AppLocalizations l10n) {
     switch (weekday) {
       case DateTime.monday:
         return l10n.monday;
-
       case DateTime.tuesday:
         return l10n.tuesday;
-
       case DateTime.wednesday:
         return l10n.wednesday;
-
       case DateTime.thursday:
         return l10n.thursday;
-
       case DateTime.friday:
         return l10n.friday;
-
       case DateTime.saturday:
         return l10n.saturday;
-
       case DateTime.sunday:
         return l10n.sunday;
-
       default:
         return '—';
     }
   }
 
-  // ============================================================
-  // CATEGORY COLOR
-  // ============================================================
+  Color _categoryColor(BuildContext context, String categoryName) {
+    final CategoryModel? category = context
+        .read<CategoryCubit>()
+        .getCategoryByName(categoryName);
 
-  Color _categoryColor(String category) {
-    switch (category) {
-      case 'Design':
-        return const Color(0xFF2563EB);
-
-      case 'Meeting':
-        return const Color(0xFFF97316);
-
-      case 'Development':
-        return const Color(0xFF16A34A);
-
-      case 'Work':
-        return const Color(0xFF8B5CF6);
-
-      case 'Health':
-        return const Color(0xFF14B8A6);
-
-      case 'Learning':
-        return const Color(0xFFF97316);
-
-      default:
-        return AppColors.needthis;
-    }
+    return category?.color ?? AppColors.needthis;
   }
 }
-
-// ============================================================
-// TASK STATUS DONUT CHART
-// ============================================================
 
 class _TaskStatusChartPainter extends CustomPainter {
   final int completed;

@@ -25,16 +25,11 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-
     _initializeApp();
   }
 
-  // ============================================================
-  // INITIALIZE APP
-  // ============================================================
-
   Future<void> _initializeApp() async {
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 10));
 
     if (!mounted) return;
 
@@ -46,10 +41,6 @@ class _SplashScreenState extends State<SplashScreen> {
     final bool loggedIn = await userStorage.isLoggedIn();
 
     if (!mounted) return;
-
-    // ============================================================
-    // USER IS LOGGED IN
-    // ============================================================
 
     if (loggedIn) {
       await userCubit.loadUser();
@@ -63,10 +54,6 @@ class _SplashScreenState extends State<SplashScreen> {
         return;
       }
 
-      // ----------------------------------------------------------
-      // WAIT FOR TASKS TO LOAD
-      // ----------------------------------------------------------
-
       final taskBloc = context.read<TaskBloc>();
 
       if (taskBloc.state is! TaskLoaded) {
@@ -77,10 +64,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
       final taskState = taskBloc.state;
 
-      // ----------------------------------------------------------
-      // CHECK IF USER HAS AT LEAST ONE TASK
-      // ----------------------------------------------------------
-
       if (taskState is TaskLoaded && taskState.tasks.isNotEmpty) {
         await context.read<StreakCubit>().recordDailyVisit(user.id);
       }
@@ -88,65 +71,78 @@ class _SplashScreenState extends State<SplashScreen> {
       if (!mounted) return;
 
       context.go(Routes.home);
-
       return;
     }
-
-    // ============================================================
-    // ONBOARDING NOT COMPLETED
-    // ============================================================
 
     if (!onboardingCompleted) {
       context.go(Routes.onboarding);
       return;
     }
 
-    // ============================================================
-    // ONBOARDING COMPLETED BUT NOT LOGGED IN
-    // ============================================================
-
     context.go(Routes.login);
   }
-
-  // ============================================================
-  // BUILD
-  // ============================================================
 
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
+    final Size screenSize = MediaQuery.sizeOf(context);
+
+    final bool isSmallWidth = screenSize.width < 360;
+    final bool isShortScreen = screenSize.height < 700;
+
+    final double logoWidth = isSmallWidth ? 150 : 200;
+    final double titleFontSize = isSmallWidth ? 32 : 40;
+    final double taglineFontSize = isSmallWidth ? 13 : 14;
+    final double progressSize = isSmallWidth ? 22 : 24;
 
     return Scaffold(
       backgroundColor: AppColors.primary,
-
       body: SafeArea(
-        child: Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: isSmallWidth ? 20 : 24),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Spacer(),
-
-              Image.asset(AppImages.logo, width: 200),
-
+              Image.asset(
+                AppImages.logo,
+                width: logoWidth,
+                fit: BoxFit.contain,
+              ),
               Text(
-                "TaskFlow",
+                'TaskFlow',
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: AppTextStyle.headlineLarge.copyWith(
                   color: Colors.white,
-                  fontSize: 40,
+                  fontSize: titleFontSize,
                 ),
               ),
-
-              const SizedBox(height: AppSpacing.sm),
-
-              Text(
-                localizations.splashTagline,
-                style: AppTextStyle.bodyMedium.copyWith(color: Colors.white70),
+              SizedBox(height: isShortScreen ? AppSpacing.xs : AppSpacing.sm),
+              SizedBox(
+                width: double.infinity,
+                child: Text(
+                  localizations.splashTagline,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyle.bodyMedium.copyWith(
+                    color: Colors.white70,
+                    fontSize: taglineFontSize,
+                  ),
+                ),
               ),
-
               const Spacer(),
-
-              const CircularProgressIndicator(color: Colors.white),
-
-              const SizedBox(height: AppSpacing.xl),
+              SizedBox(
+                width: progressSize,
+                height: progressSize,
+                child: const CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              ),
+              SizedBox(height: isShortScreen ? AppSpacing.lg : AppSpacing.xl),
             ],
           ),
         ),

@@ -1,29 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
-import 'package:task_flow/core/assets/app_images.dart';
 import 'package:task_flow/core/constants/app_colors.dart';
 import 'package:task_flow/core/routing/routes.dart';
 import 'package:task_flow/core/theme/app_text_style/app_spacing.dart';
 import 'package:task_flow/core/theme/app_text_style/app_text_styles.dart';
 import 'package:task_flow/core/widgets/notification_icon_button.dart';
-
 import 'package:task_flow/features/auth/data/model/user_model.dart';
 import 'package:task_flow/features/auth/presentation/cubit/user_cubit.dart';
-
+import 'package:task_flow/features/category/cubit/category_cubit.dart';
+import 'package:task_flow/features/category/data/model/category_model.dart';
+import 'package:task_flow/features/home/presentation/widgets/home_drawer.dart';
 import 'package:task_flow/features/home/presentation/widgets/home_task_card.dart';
 import 'package:task_flow/features/home/presentation/widgets/task_details_screen.dart';
-import 'package:task_flow/features/home/presentation/widgets/home_drawer.dart';
-
+import 'package:task_flow/features/settings/presnetation/cubit/settings_cubit.dart';
 import 'package:task_flow/features/statistics/presentation/pages/stats_screen.dart';
-
 import 'package:task_flow/features/tasks/data/model/task_model.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_bloc.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_state.dart';
-
-import 'package:task_flow/features/settings/presnetation/cubit/settings_cubit.dart';
-
 import 'package:task_flow/l10n/app_localizations.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -36,11 +31,16 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final int notificationCount = 0;
 
-  // ------------------------------------------------------------
-  // UPCOMING TASKS
-  // ------------------------------------------------------------
+  Color _categoryColor(BuildContext context, String categoryName) {
+    final CategoryModel? category = context
+        .read<CategoryCubit>()
+        .getCategoryByName(categoryName);
+
+    return category?.color ?? AppColors.needthis;
+  }
 
   List<Widget> _buildUpcomingTasks(
+    BuildContext context,
     List<TaskModel> tasks,
     DateTime today,
     bool isDark,
@@ -69,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Center(
             child: Text(
               l10n.noUpcomingTasks,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -91,9 +92,10 @@ class _HomeScreenState extends State<HomeScreen> {
               category: task.category,
               taskId: task.id,
               time: _formatTime(task.scheduledAt, l10n),
-              color: _categoryColor(task.category),
+              color: _categoryColor(context, task.category),
               completed: task.isCompleted,
               overdue: task.isOverdue,
+              scheduledAt: task.scheduledAt,
               onTap: () {
                 Navigator.push(
                   context,
@@ -108,10 +110,6 @@ class _HomeScreenState extends State<HomeScreen> {
         .toList();
   }
 
-  // ------------------------------------------------------------
-  // FORMAT TIME
-  // ------------------------------------------------------------
-
   String _formatTime(DateTime dateTime, AppLocalizations l10n) {
     final int hour = dateTime.hour;
     final int minute = dateTime.minute;
@@ -123,39 +121,41 @@ class _HomeScreenState extends State<HomeScreen> {
     return '$displayHour:${minute.toString().padLeft(2, '0')} $period';
   }
 
-  // ------------------------------------------------------------
-  // CATEGORY COLOR
-  // ------------------------------------------------------------
+  List<TaskModel> _homeTodayTasks(List<TaskModel> tasks, DateTime today) {
+    final List<TaskModel> todayTasks = tasks.where((task) {
+      final bool isToday =
+          task.scheduledAt.year == today.year &&
+          task.scheduledAt.month == today.month &&
+          task.scheduledAt.day == today.day;
 
-  Color _categoryColor(String category) {
-    switch (category) {
-      case 'Design':
-        return const Color(0xFF2563EB);
+      return isToday && !task.isOverdue;
+    }).toList();
 
-      case 'Meeting':
-        return const Color(0xFFF97316);
+    final List<TaskModel> completedTasks =
+        todayTasks.where((task) => task.isCompleted).toList()..sort((a, b) {
+          final DateTime aTime = a.completedAt ?? a.scheduledAt;
+          final DateTime bTime = b.completedAt ?? b.scheduledAt;
 
-      case 'Development':
-        return const Color(0xFF16A34A);
+          return bTime.compareTo(aTime);
+        });
 
-      case 'Work':
-        return const Color(0xFF8B5CF6);
+    final List<TaskModel> lastCompleted = completedTasks.take(2).toList();
 
-      case 'Health':
-        return const Color(0xFF14B8A6);
+    final List<TaskModel> pendingTasks =
+        todayTasks.where((task) => task.isPending).toList()
+          ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
 
-      default:
-        return AppColors.needthis;
-    }
+    final List<TaskModel> nextPending = pendingTasks.take(2).toList();
+
+    return [...lastCompleted, ...nextPending];
   }
 
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
 
-    final taskState = context.watch<TaskBloc>().state;
-
-    final settingsState = context.watch<SettingsCubit>().state;
+    final TaskState taskState = context.watch<TaskBloc>().state;
+    final SettingsState settingsState = context.watch<SettingsCubit>().state;
 
     final bool isDark = settingsState.darkModeEnabled;
 
@@ -164,10 +164,6 @@ class _HomeScreenState extends State<HomeScreen> {
         : [];
 
     final DateTime today = DateTime.now();
-
-    // ------------------------------------------------------------
-    // THEME COLORS
-    // ------------------------------------------------------------
 
     final Color backgroundColor = isDark
         ? const Color(0xFF0F172A)
@@ -191,26 +187,20 @@ class _HomeScreenState extends State<HomeScreen> {
         ? const Color(0xFF334155)
         : const Color(0xFFE2E8F0);
 
-    final Color iconBackgroundColor = isDark
-        ? const Color(0xFF312E81)
-        : const Color(0xFFEEF2FF);
-
-    // ------------------------------------------------------------
-    // TODAY'S TASKS
-    // ------------------------------------------------------------
-
-    final List<TaskModel> todayTasks = tasks.where((task) {
+    final List<TaskModel> allTodayTasks = tasks.where((task) {
       final bool isToday =
           task.scheduledAt.year == today.year &&
           task.scheduledAt.month == today.month &&
           task.scheduledAt.day == today.day;
 
       return isToday && !task.isOverdue;
-    }).toList()..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+    }).toList();
 
-    final int totalTask = todayTasks.length;
+    final List<TaskModel> homeTodayTasks = _homeTodayTasks(tasks, today);
 
-    final int completeTask = todayTasks
+    final int totalTask = allTodayTasks.length;
+
+    final int completeTask = allTodayTasks
         .where((task) => task.isCompleted)
         .length;
 
@@ -218,30 +208,42 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-
       drawer: HomeDrawer(),
-
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: AppSpacing.md),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isSmallWidth = constraints.maxWidth < 360;
+            final bool isShortHeight = constraints.maxHeight < 700;
 
-              // --------------------------------------------------
-              // HEADER
-              // --------------------------------------------------
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            final double horizontalPadding = isSmallWidth ? 16 : 20;
+            final double headerSpacing = isSmallWidth ? 10 : 12;
+            final double sectionSpacing = isSmallWidth ? 18 : 20;
+
+            final double progressCardHeight = isSmallWidth ? 104 : 110;
+            final double progressCardHorizontalPadding = isSmallWidth ? 12 : 16;
+            final double progressCircleSize = isSmallWidth ? 58 : 64;
+            final double progressIndicatorSize = isSmallWidth ? 68 : 75;
+
+            final double titleFontSize = isSmallWidth ? 20 : 22;
+            final double subtitleFontSize = isSmallWidth ? 11 : 12;
+
+            final double topPadding = isShortHeight
+                ? AppSpacing.sm
+                : AppSpacing.md;
+
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  SizedBox(height: topPadding),
                   Row(
                     children: [
                       Builder(
                         builder: (context) {
                           return Container(
-                            width: 40,
-                            height: 40,
+                            width: isSmallWidth ? 38 : 40,
+                            height: isSmallWidth ? 38 : 40,
                             decoration: BoxDecoration(
                               color: cardColor,
                               shape: BoxShape.circle,
@@ -254,232 +256,223 @@ class _HomeScreenState extends State<HomeScreen> {
                               padding: EdgeInsets.zero,
                               icon: Icon(
                                 Icons.menu,
-                                size: 21,
+                                size: isSmallWidth ? 20 : 21,
                                 color: primaryTextColor,
                               ),
                             ),
                           );
                         },
                       ),
-
-                      const SizedBox(width: 12),
-
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          BlocBuilder<UserCubit, UserModel?>(
-                            builder: (context, user) {
-                              return Text(
-                                '${l10n.hello}, ${user?.name ?? l10n.user}',
-                                style: AppTextStyle.bodyLarge.copyWith(
+                      SizedBox(width: headerSpacing),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            BlocBuilder<UserCubit, UserModel?>(
+                              builder: (context, user) {
+                                return Text(
+                                  '${l10n.hello}, ${user?.name ?? l10n.user}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyle.bodyLarge.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: primaryTextColor,
+                                    fontSize: isSmallWidth ? 16 : 18,
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              l10n.letsMakeTodayProductive,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyle.bodyMedium.copyWith(
+                                color: secondaryTextColor,
+                                fontSize: subtitleFontSize,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: isSmallWidth ? 8 : 12),
+                      NotificationIconButton(isDark: isDark),
+                    ],
+                  ),
+                  SizedBox(height: sectionSpacing),
+                  Container(
+                    width: double.infinity,
+                    height: progressCardHeight,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: progressCardHorizontalPadding,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: borderColor, width: 0.8),
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: progressCircleSize,
+                          height: progressCircleSize,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              SizedBox(
+                                width: progressIndicatorSize,
+                                height: progressIndicatorSize,
+                                child: CircularProgressIndicator(
+                                  value: progress,
+                                  strokeWidth: isSmallWidth ? 5 : 6,
+                                  backgroundColor: borderColor,
+                                  color: AppColors.needthis,
+                                ),
+                              ),
+                              Text(
+                                '${(progress * 100).round()}%',
+                                style: TextStyle(
+                                  fontSize: isSmallWidth ? 16 : 18,
                                   fontWeight: FontWeight.bold,
                                   color: primaryTextColor,
-                                  fontSize: 18,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: isSmallWidth ? 10 : 16),
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.todaysProgress,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTextStyle.bodyMedium.copyWith(
+                                  fontSize: isSmallWidth ? 14 : 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryTextColor,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                l10n.tasksCompleted(completeTask, totalTask),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTextStyle.bodyMedium.copyWith(
+                                  fontSize: isSmallWidth ? 11 : 12,
+                                  color: secondaryTextColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: isSmallWidth ? 8 : 12),
+                        Container(
+                          width: isSmallWidth ? 38 : 42,
+                          height: isSmallWidth ? 38 : 42,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: borderColor, width: 2.5),
+                          ),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => StatsScreen(),
                                 ),
                               );
                             },
-                          ),
-
-                          const SizedBox(height: 2),
-
-                          Text(
-                            l10n.letsMakeTodayProductive,
-                            style: AppTextStyle.bodyMedium.copyWith(
-                              color: secondaryTextColor,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-
-                  // --------------------------------------------------
-                  // NOTIFICATIONS
-                  // --------------------------------------------------
-                  NotificationIconButton(isDark: isDark),
-                ],
-              ),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // --------------------------------------------------
-              // TODAY'S PROGRESS
-              // --------------------------------------------------
-              Container(
-                width: double.infinity,
-                height: 110,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: borderColor, width: 0.8),
-                ),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 64,
-                      height: 64,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          SizedBox(
-                            width: 75,
-                            height: 75,
-                            child: CircularProgressIndicator(
-                              value: progress,
-                              strokeWidth: 6,
-                              backgroundColor: borderColor,
+                            child: Icon(
+                              Icons.bar_chart_rounded,
                               color: AppColors.needthis,
                             ),
                           ),
-
-                          Text(
-                            '${(progress * 100).round()}%',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: primaryTextColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(width: 16),
-
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.todaysProgress,
-                            style: AppTextStyle.bodyMedium.copyWith(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: primaryTextColor,
-                            ),
-                          ),
-
-                          const SizedBox(height: 5),
-
-                          Text(
-                            l10n.tasksCompleted(completeTask, totalTask),
-                            style: AppTextStyle.bodyMedium.copyWith(
-                              fontSize: 12,
-                              color: secondaryTextColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: iconBackgroundColor,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: borderColor, width: 0.3),
-                      ),
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => StatsScreen(),
-                            ),
-                          );
-                        },
-                        child: Image.asset(AppImages.static),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              // --------------------------------------------------
-              // TODAY'S TASKS HEADER
-              // --------------------------------------------------
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    l10n.todaysTasks,
-                    style: AppTextStyle.bodyLarge.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: primaryTextColor,
-                      fontSize: 22,
-                    ),
-                  ),
-
-                  InkWell(
-                    onTap: () {
-                      context.push(Routes.todayTasks);
-                    },
-                    child: Row(
-                      children: [
-                        Text(
-                          l10n.seeAll,
-                          style: TextStyle(
-                            color: AppColors.needthis,
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        const SizedBox(width: 3),
-
-                        Icon(
-                          Icons.chevron_right,
-                          size: 22,
-                          color: AppColors.needthis,
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              // --------------------------------------------------
-              // TODAY'S TASKS
-              // --------------------------------------------------
-              if (todayTasks.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Center(
-                    child: Text(
-                      l10n.noTasksForToday,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: mutedTextColor,
+                  SizedBox(height: sectionSpacing),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l10n.todaysTasks,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyle.bodyLarge.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: primaryTextColor,
+                            fontSize: titleFontSize,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () {
+                          context.push(Routes.todayTasks);
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              l10n.seeAll,
+                              style: TextStyle(
+                                color: AppColors.needthis,
+                                fontSize: isSmallWidth ? 13 : 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 3),
+                            Icon(
+                              Icons.chevron_right,
+                              size: isSmallWidth ? 20 : 22,
+                              color: AppColors.needthis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                )
-              else
-                ...todayTasks
-                    .take(4)
-                    .map(
-                      (task) => Padding(
+                  SizedBox(height: isSmallWidth ? 10 : 12),
+                  if (homeTodayTasks.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text(
+                          l10n.noTasksForToday,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: mutedTextColor,
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    ...homeTodayTasks.map((task) {
+                      final Color categoryColor = _categoryColor(
+                        context,
+                        task.category,
+                      );
+
+                      return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: HomeTaskCard(
                           title: task.title,
                           category: task.category,
                           taskId: task.id,
                           time: _formatTime(task.scheduledAt, l10n),
-                          color: _categoryColor(task.category),
+                          color: categoryColor,
                           completed: task.isCompleted,
                           overdue: task.isOverdue,
+                          scheduledAt: task.scheduledAt,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -489,64 +482,58 @@ class _HomeScreenState extends State<HomeScreen> {
                             );
                           },
                         ),
-                      ),
-                    ),
-
-              const SizedBox(height: AppSpacing.xl),
-
-              // --------------------------------------------------
-              // UPCOMING HEADER
-              // --------------------------------------------------
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    l10n.upcoming,
-                    style: AppTextStyle.bodyLarge.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: primaryTextColor,
-                      fontSize: 22,
-                    ),
-                  ),
-
-                  InkWell(
-                    onTap: () {
-                      context.push(Routes.upcomingTasks);
-                    },
-                    child: Row(
-                      children: [
-                        Text(
-                          l10n.seeAll,
-                          style: TextStyle(
-                            color: AppColors.needthis,
-                            fontSize: 15,
+                      );
+                    }),
+                  SizedBox(height: isShortHeight ? 20 : AppSpacing.xl),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l10n.upcoming,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyle.bodyLarge.copyWith(
                             fontWeight: FontWeight.bold,
+                            color: primaryTextColor,
+                            fontSize: titleFontSize,
                           ),
                         ),
-
-                        const SizedBox(width: 3),
-
-                        Icon(
-                          Icons.chevron_right,
-                          size: 22,
-                          color: AppColors.needthis,
+                      ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () {
+                          context.push(Routes.upcomingTasks);
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              l10n.seeAll,
+                              style: TextStyle(
+                                color: AppColors.needthis,
+                                fontSize: isSmallWidth ? 13 : 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 3),
+                            Icon(
+                              Icons.chevron_right,
+                              size: isSmallWidth ? 20 : 22,
+                              color: AppColors.needthis,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                  SizedBox(height: isSmallWidth ? 8 : AppSpacing.sm),
+                  ..._buildUpcomingTasks(context, tasks, today, isDark, l10n),
+                  const SizedBox(height: 24),
                 ],
               ),
-
-              const SizedBox(height: AppSpacing.sm),
-
-              // --------------------------------------------------
-              // UPCOMING TASKS
-              // --------------------------------------------------
-              ..._buildUpcomingTasks(tasks, today, isDark, l10n),
-
-              const SizedBox(height: 24),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

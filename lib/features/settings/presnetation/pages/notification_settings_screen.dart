@@ -14,8 +14,11 @@ class NotificationSettingsScreen extends StatelessWidget {
     return BlocBuilder<SettingsCubit, SettingsState>(
       builder: (context, state) {
         final l10n = AppLocalizations.of(context)!;
-
         final bool isDark = state.darkModeEnabled;
+        final Size screenSize = MediaQuery.sizeOf(context);
+
+        final bool isSmallWidth = screenSize.width < 360;
+        final bool isShortScreen = screenSize.height < 700;
 
         final Color backgroundColor = isDark
             ? const Color(0xFF0F172A)
@@ -41,79 +44,65 @@ class NotificationSettingsScreen extends StatelessWidget {
             ? const Color(0xFF818CF8)
             : const Color(0xFF6366F1);
 
+        final double horizontalPadding = isSmallWidth ? 16 : 20;
+
         return Scaffold(
           backgroundColor: backgroundColor,
-
-          // ========================================================
-          // APP BAR
-          // ========================================================
           appBar: AppBar(
             backgroundColor: backgroundColor,
             elevation: 0,
             scrolledUnderElevation: 0,
             surfaceTintColor: Colors.transparent,
-
             leading: Container(
-              margin: const EdgeInsets.all(6),
-
+              margin: EdgeInsets.all(isSmallWidth ? 7 : 6),
               decoration: BoxDecoration(
                 color: cardColor,
                 shape: BoxShape.circle,
                 border: Border.all(color: borderColor, width: 0.8),
               ),
-
               child: IconButton(
                 onPressed: () {
                   context.go(Routes.settings);
                 },
-
                 padding: EdgeInsets.zero,
-
                 icon: Icon(
                   Icons.arrow_back_ios_new_rounded,
-                  size: 17,
+                  size: isSmallWidth ? 16 : 17,
                   color: primaryTextColor,
                 ),
               ),
             ),
-
             title: Text(
               l10n.notificationSettings,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 21,
+                fontSize: isSmallWidth ? 19 : 21,
                 fontWeight: FontWeight.w800,
                 color: primaryTextColor,
               ),
             ),
-
             centerTitle: true,
           ),
-
-          // ========================================================
-          // BODY
-          // ========================================================
           body: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
-
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              isShortScreen ? 6 : 8,
+              horizontalPadding,
+              isShortScreen ? 20 : 30,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-
               children: [
-                // ==================================================
-                // GENERAL NOTIFICATIONS
-                // ==================================================
-                _buildSectionTitle(l10n.notifications, isDark),
-
+                _buildSectionTitle(l10n.notifications, isDark, isSmallWidth),
                 _buildSwitchTile(
                   icon: Icons.notifications_none_rounded,
                   title: l10n.notifications,
                   subtitle: l10n.enableOrDisableAllNotifications,
                   value: state.notificationsEnabled,
-
                   onChanged: (value) {
                     context.read<SettingsCubit>().toggleNotifications(value);
                   },
-
                   isDark: isDark,
                   cardColor: cardColor,
                   borderColor: borderColor,
@@ -121,23 +110,16 @@ class NotificationSettingsScreen extends StatelessWidget {
                   secondaryTextColor: secondaryTextColor,
                   iconBackgroundColor: iconBackgroundColor,
                   iconColor: iconColor,
+                  isSmallWidth: isSmallWidth,
                 ),
-
-                const SizedBox(height: 24),
-
-                // ==================================================
-                // TASK REMINDERS
-                // ==================================================
-                _buildSectionTitle(l10n.taskReminders, isDark),
-
+                SizedBox(height: isShortScreen ? 20 : 24),
+                _buildSectionTitle(l10n.taskReminders, isDark, isSmallWidth),
                 _buildSwitchTile(
                   icon: Icons.alarm_outlined,
                   title: l10n.taskReminders,
                   subtitle: l10n.receiveRemindersBeforeTasks,
-
                   value:
                       state.taskRemindersEnabled && state.notificationsEnabled,
-
                   onChanged: state.notificationsEnabled
                       ? (value) {
                           context.read<SettingsCubit>().toggleTaskReminders(
@@ -145,7 +127,6 @@ class NotificationSettingsScreen extends StatelessWidget {
                           );
                         }
                       : null,
-
                   isDark: isDark,
                   cardColor: cardColor,
                   borderColor: borderColor,
@@ -153,10 +134,9 @@ class NotificationSettingsScreen extends StatelessWidget {
                   secondaryTextColor: secondaryTextColor,
                   iconBackgroundColor: iconBackgroundColor,
                   iconColor: iconColor,
+                  isSmallWidth: isSmallWidth,
                 ),
-
                 const SizedBox(height: 8),
-
                 _buildReminderTimeTile(
                   context: context,
                   state: state,
@@ -167,25 +147,21 @@ class NotificationSettingsScreen extends StatelessWidget {
                   secondaryTextColor: secondaryTextColor,
                   iconBackgroundColor: iconBackgroundColor,
                   iconColor: iconColor,
+                  isSmallWidth: isSmallWidth,
                 ),
-
-                const SizedBox(height: 24),
-
-                // ==================================================
-                // FOCUS NOTIFICATIONS
-                // ==================================================
-                _buildSectionTitle(l10n.focusNotifications, isDark),
-
-                // Master Focus Switch
+                SizedBox(height: isShortScreen ? 20 : 24),
+                _buildSectionTitle(
+                  l10n.focusNotifications,
+                  isDark,
+                  isSmallWidth,
+                ),
                 _buildSwitchTile(
                   icon: Icons.center_focus_strong,
                   title: l10n.focusNotifications,
                   subtitle: l10n.receiveFocusSessionNotifications,
-
                   value:
                       state.focusNotificationsEnabled &&
                       state.notificationsEnabled,
-
                   onChanged: state.notificationsEnabled
                       ? (value) {
                           context
@@ -193,7 +169,6 @@ class NotificationSettingsScreen extends StatelessWidget {
                               .toggleFocusNotifications(value);
                         }
                       : null,
-
                   isDark: isDark,
                   cardColor: cardColor,
                   borderColor: borderColor,
@@ -201,21 +176,17 @@ class NotificationSettingsScreen extends StatelessWidget {
                   secondaryTextColor: secondaryTextColor,
                   iconBackgroundColor: iconBackgroundColor,
                   iconColor: iconColor,
+                  isSmallWidth: isSmallWidth,
                 ),
-
                 const SizedBox(height: 8),
-
-                // Focus Session Finished
                 _buildSwitchTile(
                   icon: Icons.check_circle_outline_rounded,
                   title: l10n.focusSessionFinished,
                   subtitle: l10n.notifyWhenFocusSessionEnds,
-
                   value:
                       state.focusSessionFinished &&
                       state.focusNotificationsEnabled &&
                       state.notificationsEnabled,
-
                   onChanged:
                       state.notificationsEnabled &&
                           state.focusNotificationsEnabled
@@ -225,7 +196,6 @@ class NotificationSettingsScreen extends StatelessWidget {
                               .toggleFocusSessionFinished(value);
                         }
                       : null,
-
                   isDark: isDark,
                   cardColor: cardColor,
                   borderColor: borderColor,
@@ -233,19 +203,16 @@ class NotificationSettingsScreen extends StatelessWidget {
                   secondaryTextColor: secondaryTextColor,
                   iconBackgroundColor: iconBackgroundColor,
                   iconColor: iconColor,
+                  isSmallWidth: isSmallWidth,
                 ),
-
-                // Break Started
                 _buildSwitchTile(
                   icon: Icons.free_breakfast_outlined,
                   title: l10n.breakStarted,
                   subtitle: l10n.notifyWhenBreakStarts,
-
                   value:
                       state.breakStarted &&
                       state.focusNotificationsEnabled &&
                       state.notificationsEnabled,
-
                   onChanged:
                       state.notificationsEnabled &&
                           state.focusNotificationsEnabled
@@ -255,7 +222,6 @@ class NotificationSettingsScreen extends StatelessWidget {
                           );
                         }
                       : null,
-
                   isDark: isDark,
                   cardColor: cardColor,
                   borderColor: borderColor,
@@ -263,19 +229,16 @@ class NotificationSettingsScreen extends StatelessWidget {
                   secondaryTextColor: secondaryTextColor,
                   iconBackgroundColor: iconBackgroundColor,
                   iconColor: iconColor,
+                  isSmallWidth: isSmallWidth,
                 ),
-
-                // Break Finished
                 _buildSwitchTile(
                   icon: Icons.play_circle_outline_rounded,
                   title: l10n.breakFinished,
                   subtitle: l10n.notifyWhenBreakEnds,
-
                   value:
                       state.breakFinished &&
                       state.focusNotificationsEnabled &&
                       state.notificationsEnabled,
-
                   onChanged:
                       state.notificationsEnabled &&
                           state.focusNotificationsEnabled
@@ -285,7 +248,6 @@ class NotificationSettingsScreen extends StatelessWidget {
                           );
                         }
                       : null,
-
                   isDark: isDark,
                   cardColor: cardColor,
                   borderColor: borderColor,
@@ -293,45 +255,33 @@ class NotificationSettingsScreen extends StatelessWidget {
                   secondaryTextColor: secondaryTextColor,
                   iconBackgroundColor: iconBackgroundColor,
                   iconColor: iconColor,
+                  isSmallWidth: isSmallWidth,
                 ),
-
-                const SizedBox(height: 18),
-
-                // ==================================================
-                // INFO
-                // ==================================================
+                SizedBox(height: isShortScreen ? 14 : 18),
                 Container(
                   width: double.infinity,
-
-                  padding: const EdgeInsets.all(14),
-
+                  padding: EdgeInsets.all(isSmallWidth ? 12 : 14),
                   decoration: BoxDecoration(
                     color: isDark
                         ? const Color(0xFF172033)
                         : const Color(0xFFF1F5F9),
-
                     borderRadius: BorderRadius.circular(14),
-
                     border: Border.all(color: borderColor, width: 0.7),
                   ),
-
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
-
                     children: [
                       Icon(
                         Icons.info_outline_rounded,
-                        size: 19,
+                        size: isSmallWidth ? 18 : 19,
                         color: iconColor,
                       ),
-
-                      const SizedBox(width: 10),
-
+                      SizedBox(width: isSmallWidth ? 8 : 10),
                       Expanded(
                         child: Text(
                           l10n.notificationSettingsInfo,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: isSmallWidth ? 10 : 11,
                             height: 1.5,
                             fontWeight: FontWeight.w500,
                             color: secondaryTextColor,
@@ -349,19 +299,15 @@ class NotificationSettingsScreen extends StatelessWidget {
     );
   }
 
-  // ============================================================
-  // SECTION TITLE
-  // ============================================================
-
-  Widget _buildSectionTitle(String title, bool isDark) {
+  Widget _buildSectionTitle(String title, bool isDark, bool isSmallWidth) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 10),
-
       child: Text(
         title.toUpperCase(),
-
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: isSmallWidth ? 9 : 10,
           fontWeight: FontWeight.w800,
           letterSpacing: 0.8,
           color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
@@ -370,17 +316,12 @@ class NotificationSettingsScreen extends StatelessWidget {
     );
   }
 
-  // ============================================================
-  // SWITCH TILE
-  // ============================================================
-
   Widget _buildSwitchTile({
     required IconData icon,
     required String title,
     required String subtitle,
     required bool value,
     required ValueChanged<bool>? onChanged,
-
     required bool isDark,
     required Color cardColor,
     required Color borderColor,
@@ -388,58 +329,56 @@ class NotificationSettingsScreen extends StatelessWidget {
     required Color secondaryTextColor,
     required Color iconBackgroundColor,
     required Color iconColor,
+    required bool isSmallWidth,
   }) {
     final bool disabled = onChanged == null;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-
+      padding: EdgeInsets.symmetric(
+        horizontal: isSmallWidth ? 11 : 14,
+        vertical: isSmallWidth ? 10 : 12,
+      ),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(14),
-
         border: Border.all(color: borderColor, width: 0.7),
       ),
-
       child: Row(
         children: [
           Opacity(
             opacity: disabled ? 0.45 : 1,
-
-            child: _buildIconContainer(icon, iconBackgroundColor, iconColor),
+            child: _buildIconContainer(
+              icon,
+              iconBackgroundColor,
+              iconColor,
+              isSmallWidth,
+            ),
           ),
-
-          const SizedBox(width: 13),
-
+          SizedBox(width: isSmallWidth ? 9 : 13),
           Expanded(
             child: Opacity(
               opacity: disabled ? 0.45 : 1,
-
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-
                 children: [
                   Text(
                     title,
-
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: isSmallWidth ? 12 : 13,
                       fontWeight: FontWeight.w700,
                       color: primaryTextColor,
                     ),
                   ),
-
                   const SizedBox(height: 3),
-
                   Text(
                     subtitle,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: isSmallWidth ? 9 : 10,
                       height: 1.3,
                       fontWeight: FontWeight.w500,
                       color: secondaryTextColor,
@@ -449,13 +388,11 @@ class NotificationSettingsScreen extends StatelessWidget {
               ),
             ),
           ),
-
+          const SizedBox(width: 4),
           Switch(
             value: value,
             onChanged: onChanged,
-
             activeThumbColor: const Color(0xFF6366F1),
-
             activeTrackColor: isDark ? const Color(0xFF4338CA) : null,
           ),
         ],
@@ -463,14 +400,9 @@ class NotificationSettingsScreen extends StatelessWidget {
     );
   }
 
-  // ============================================================
-  // REMINDER TIME TILE
-  // ============================================================
-
   Widget _buildReminderTimeTile({
     required BuildContext context,
     required SettingsState state,
-
     required bool isDark,
     required Color cardColor,
     required Color borderColor,
@@ -478,6 +410,7 @@ class NotificationSettingsScreen extends StatelessWidget {
     required Color secondaryTextColor,
     required Color iconBackgroundColor,
     required Color iconColor,
+    required bool isSmallWidth,
   }) {
     final l10n = AppLocalizations.of(context)!;
 
@@ -494,55 +427,49 @@ class NotificationSettingsScreen extends StatelessWidget {
               );
             }
           : null,
-
       child: Opacity(
         opacity: enabled ? 1 : 0.45,
-
         child: Container(
           margin: const EdgeInsets.only(bottom: 8),
-
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-
+          padding: EdgeInsets.symmetric(
+            horizontal: isSmallWidth ? 11 : 14,
+            vertical: isSmallWidth ? 10 : 12,
+          ),
           decoration: BoxDecoration(
             color: cardColor,
-
             borderRadius: BorderRadius.circular(14),
-
             border: Border.all(color: borderColor, width: 0.7),
           ),
-
           child: Row(
             children: [
               _buildIconContainer(
                 Icons.schedule_outlined,
                 iconBackgroundColor,
                 iconColor,
+                isSmallWidth,
               ),
-
-              const SizedBox(width: 13),
-
+              SizedBox(width: isSmallWidth ? 9 : 13),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-
                   children: [
                     Text(
                       l10n.reminderBeforeTask,
-
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: isSmallWidth ? 12 : 13,
                         fontWeight: FontWeight.w700,
                         color: primaryTextColor,
                       ),
                     ),
-
                     const SizedBox(height: 3),
-
                     Text(
                       _formatMinutes(state.taskReminderMinutes, l10n),
-
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: isSmallWidth ? 9 : 10,
                         fontWeight: FontWeight.w500,
                         color: secondaryTextColor,
                       ),
@@ -550,10 +477,9 @@ class NotificationSettingsScreen extends StatelessWidget {
                   ],
                 ),
               ),
-
               Icon(
                 Icons.chevron_right_rounded,
-                size: 19,
+                size: isSmallWidth ? 18 : 19,
                 color: isDark
                     ? const Color(0xFF475569)
                     : const Color(0xFFCBD5E1),
@@ -564,10 +490,6 @@ class NotificationSettingsScreen extends StatelessWidget {
       ),
     );
   }
-
-  // ============================================================
-  // REMINDER TIME DIALOG
-  // ============================================================
 
   void _showReminderTimeDialog(
     BuildContext context,
@@ -580,66 +502,62 @@ class NotificationSettingsScreen extends StatelessWidget {
 
     showDialog(
       context: context,
-
       builder: (dialogContext) {
         return AlertDialog(
           backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
-
           title: Text(
             l10n.reminderBeforeTask,
-
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: isDark ? Colors.white : const Color(0xFF0F172A),
-
+              fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
           ),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: options.map((minutes) {
+                final bool selected = minutes == selectedMinutes;
 
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-
-            children: options.map((minutes) {
-              final bool selected = minutes == selectedMinutes;
-
-              return ListTile(
-                contentPadding: EdgeInsets.zero,
-
-                title: Text(
-                  _formatMinutes(minutes, l10n),
-
-                  style: TextStyle(
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-
-                    fontSize: 13,
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  title: Text(
+                    _formatMinutes(minutes, l10n),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      fontSize: 13,
+                    ),
                   ),
-                ),
+                  trailing: selected
+                      ? const Icon(
+                          Icons.check_rounded,
+                          color: Color(0xFF6366F1),
+                        )
+                      : null,
+                  onTap: () {
+                    context.read<SettingsCubit>().changeTaskReminderMinutes(
+                      minutes,
+                    );
 
-                trailing: selected
-                    ? const Icon(Icons.check_rounded, color: Color(0xFF6366F1))
-                    : null,
-
-                onTap: () {
-                  context.read<SettingsCubit>().changeTaskReminderMinutes(
-                    minutes,
-                  );
-
-                  Navigator.pop(dialogContext);
-                },
-              );
-            }).toList(),
+                    Navigator.pop(dialogContext);
+                  },
+                );
+              }).toList(),
+            ),
           ),
         );
       },
     );
   }
-
-  // ============================================================
-  // FORMAT MINUTES
-  // ============================================================
 
   String _formatMinutes(int minutes, AppLocalizations l10n) {
     if (minutes == 60) {
@@ -649,25 +567,22 @@ class NotificationSettingsScreen extends StatelessWidget {
     return l10n.minutesBefore(minutes);
   }
 
-  // ============================================================
-  // ICON CONTAINER
-  // ============================================================
-
   Widget _buildIconContainer(
     IconData icon,
     Color backgroundColor,
     Color iconColor,
+    bool isSmallWidth,
   ) {
-    return Container(
-      width: 40,
-      height: 40,
+    final double size = isSmallWidth ? 38 : 40;
 
+    return Container(
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(11),
       ),
-
-      child: Icon(icon, size: 20, color: iconColor),
+      child: Icon(icon, size: isSmallWidth ? 19 : 20, color: iconColor),
     );
   }
 }

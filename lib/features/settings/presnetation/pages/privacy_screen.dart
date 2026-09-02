@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:task_flow/core/routing/routes.dart';
 
+import 'package:task_flow/core/routing/routes.dart';
 import 'package:task_flow/l10n/app_localizations.dart';
 
 class PrivacyScreen extends StatelessWidget {
@@ -12,6 +12,10 @@ class PrivacyScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final bool isDark = theme.brightness == Brightness.dark;
+    final Size screenSize = MediaQuery.sizeOf(context);
+
+    final bool isSmallWidth = screenSize.width < 360;
+    final bool isShortScreen = screenSize.height < 700;
 
     final Color backgroundColor = isDark
         ? const Color(0xFF0F172A)
@@ -23,7 +27,7 @@ class PrivacyScreen extends StatelessWidget {
         ? const Color(0xFFF8FAFC)
         : const Color(0xFF0F172A);
 
-    final Color secondaryTextColor = const Color(0xFF94A3B8);
+    const Color secondaryTextColor = Color(0xFF94A3B8);
 
     final Color borderColor = isDark
         ? const Color(0xFF334155)
@@ -37,17 +41,17 @@ class PrivacyScreen extends StatelessWidget {
         ? const Color(0xFF818CF8)
         : const Color(0xFF6366F1);
 
+    final double horizontalPadding = isSmallWidth ? 16 : 20;
+
     return Scaffold(
       backgroundColor: backgroundColor,
-
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-
         leading: Container(
-          margin: const EdgeInsets.all(6),
+          margin: EdgeInsets.all(isSmallWidth ? 7 : 6),
           decoration: BoxDecoration(
             color: cardColor,
             shape: BoxShape.circle,
@@ -58,30 +62,32 @@ class PrivacyScreen extends StatelessWidget {
             padding: EdgeInsets.zero,
             icon: Icon(
               Icons.arrow_back_ios_new_rounded,
-              size: 17,
+              size: isSmallWidth ? 16 : 17,
               color: primaryTextColor,
             ),
           ),
         ),
-
         title: Text(
           l10n.privacy,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 22,
+            fontSize: isSmallWidth ? 20 : 22,
             fontWeight: FontWeight.w800,
             color: primaryTextColor,
           ),
         ),
-
         centerTitle: true,
       ),
-
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
-
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
+          isShortScreen ? 8 : 12,
+          horizontalPadding,
+          isShortScreen ? 20 : 30,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-
           children: [
             _buildSection(
               icon: Icons.security_outlined,
@@ -93,10 +99,9 @@ class PrivacyScreen extends StatelessWidget {
               iconColor: iconColor,
               primaryTextColor: primaryTextColor,
               secondaryTextColor: secondaryTextColor,
+              isSmallWidth: isSmallWidth,
             ),
-
             const SizedBox(height: 12),
-
             _buildSection(
               icon: Icons.storage_outlined,
               title: l10n.privacyDataStorage,
@@ -107,10 +112,9 @@ class PrivacyScreen extends StatelessWidget {
               iconColor: iconColor,
               primaryTextColor: primaryTextColor,
               secondaryTextColor: secondaryTextColor,
+              isSmallWidth: isSmallWidth,
             ),
-
             const SizedBox(height: 12),
-
             _buildSection(
               icon: Icons.notifications_none_rounded,
               title: l10n.privacyNotifications,
@@ -121,10 +125,9 @@ class PrivacyScreen extends StatelessWidget {
               iconColor: iconColor,
               primaryTextColor: primaryTextColor,
               secondaryTextColor: secondaryTextColor,
+              isSmallWidth: isSmallWidth,
             ),
-
             const SizedBox(height: 12),
-
             _buildSection(
               icon: Icons.manage_accounts_outlined,
               title: l10n.privacyYourControl,
@@ -135,14 +138,15 @@ class PrivacyScreen extends StatelessWidget {
               iconColor: iconColor,
               primaryTextColor: primaryTextColor,
               secondaryTextColor: secondaryTextColor,
+              isSmallWidth: isSmallWidth,
             ),
-
-            const SizedBox(height: 24),
-
+            SizedBox(height: isShortScreen ? 20 : 24),
             Text(
               l10n.lastUpdated,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: isSmallWidth ? 9 : 10,
                 fontWeight: FontWeight.w600,
                 color: secondaryTextColor,
               ),
@@ -152,10 +156,6 @@ class PrivacyScreen extends StatelessWidget {
       ),
     );
   }
-
-  // ============================================================
-  // SECTION
-  // ============================================================
 
   Widget _buildSection({
     required IconData icon,
@@ -167,44 +167,42 @@ class PrivacyScreen extends StatelessWidget {
     required Color iconColor,
     required Color primaryTextColor,
     required Color secondaryTextColor,
+    required bool isSmallWidth,
   }) {
     return Container(
       width: double.infinity,
-
-      padding: const EdgeInsets.all(16),
-
+      padding: EdgeInsets.all(isSmallWidth ? 14 : 16),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
-
         border: Border.all(color: borderColor, width: 0.7),
       ),
-
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-
         children: [
           Row(
             children: [
               Container(
-                width: 42,
-                height: 42,
-
+                width: isSmallWidth ? 40 : 42,
+                height: isSmallWidth ? 40 : 42,
                 decoration: BoxDecoration(
                   color: iconBackgroundColor,
                   borderRadius: BorderRadius.circular(11),
                 ),
-
-                child: Icon(icon, size: 21, color: iconColor),
+                child: Icon(
+                  icon,
+                  size: isSmallWidth ? 20 : 21,
+                  color: iconColor,
+                ),
               ),
-
-              const SizedBox(width: 12),
-
+              SizedBox(width: isSmallWidth ? 10 : 12),
               Expanded(
                 child: Text(
                   title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: isSmallWidth ? 13 : 14,
                     fontWeight: FontWeight.w800,
                     color: primaryTextColor,
                   ),
@@ -212,13 +210,11 @@ class PrivacyScreen extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 12),
-
           Text(
             description,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: isSmallWidth ? 10 : 11,
               height: 1.6,
               fontWeight: FontWeight.w500,
               color: secondaryTextColor,

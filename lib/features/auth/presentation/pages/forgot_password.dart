@@ -18,7 +18,6 @@ class ForgotPassword extends StatefulWidget {
 
 class _ForgotPasswordState extends State<ForgotPassword> {
   final _formKey = GlobalKey<FormState>();
-
   final TextEditingController _emailController = TextEditingController();
 
   @override
@@ -29,12 +28,10 @@ class _ForgotPasswordState extends State<ForgotPassword> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colorScheme = theme.colorScheme;
     final bool isDark = theme.brightness == Brightness.dark;
-
-    final l10n = AppLocalizations.of(context)!;
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
 
     final Color titleColor = isDark ? AppColors.darkText : AppColors.lightText;
 
@@ -44,181 +41,154 @@ class _ForgotPasswordState extends State<ForgotPassword> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isSmallWidth = constraints.maxWidth < 360;
+            final bool isShortHeight = constraints.maxHeight < 700;
 
-          child: Form(
-            key: _formKey,
+            final double horizontalPadding = isSmallWidth ? 16 : 20;
+            final double imageWidth = isSmallWidth ? 290 : 342;
+            final double imageHeight = isSmallWidth
+                ? 200
+                : isShortHeight
+                ? 210
+                : 240;
 
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            final double titleFontSize = isSmallWidth ? 24 : 28;
+            final double descriptionFontSize = isSmallWidth ? 14 : 15;
 
-              children: [
-                const SizedBox(height: AppSpacing.md),
-
-                // ==================================================
-                // BACK BUTTON
-                // ==================================================
-                IconButton(
-                  onPressed: () {
-                    context.go(Routes.login);
-                  },
-
-                  padding: EdgeInsets.zero,
-
-                  constraints: const BoxConstraints(
-                    minWidth: 40,
-                    minHeight: 40,
-                  ),
-
-                  icon: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: 18,
-                    color: titleColor,
-                  ),
-                ),
-
-                const SizedBox(height: AppSpacing.lg),
-
-                // ==================================================
-                // CONTENT
-                // ==================================================
-                Center(
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: 240,
-                        width: 342,
-                        child: Image.asset(AppImages.forgotPassword),
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: AppSpacing.md),
+                    IconButton(
+                      onPressed: () {
+                        context.go(Routes.login);
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 40,
+                        minHeight: 40,
                       ),
-
-                      const SizedBox(height: 28),
-
-                      // ==================================================
-                      // TITLE
-                      // ==================================================
-                      Text(
-                        l10n.forgotPassword,
-                        textAlign: TextAlign.center,
-
-                        style: theme.textTheme.headlineLarge?.copyWith(
-                          color: titleColor,
-                          fontWeight: FontWeight.w800,
-                        ),
+                      icon: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 18,
+                        color: titleColor,
                       ),
-
-                      const SizedBox(height: 8),
-
-                      // ==================================================
-                      // DESCRIPTION
-                      // ==================================================
-                      Text(
-                        l10n.forgotPasswordDescription1,
-                        textAlign: TextAlign.center,
-
-                        style: AppTextStyle.bodyMedium.copyWith(
-                          color: subtitleColor,
-                          fontSize: 15,
-                        ),
-                      ),
-
-                      Text(
-                        l10n.forgotPasswordDescription2,
-                        textAlign: TextAlign.center,
-
-                        style: AppTextStyle.bodyMedium.copyWith(
-                          color: subtitleColor,
-                          fontSize: 15,
-                        ),
-                      ),
-
-                      const SizedBox(height: 28),
-
-                      // ==================================================
-                      // EMAIL
-                      // ==================================================
-                      Align(
-                        alignment: Alignment.centerLeft,
-
-                        child: AuthTextField(
-                          label: l10n.emailAddress,
-                          hintText: l10n.enterYourEmailAddress,
-
-                          prefixIcon: Icon(
-                            Icons.email_outlined,
-                            color: isDark
-                                ? AppColors.darkSubtitle
-                                : AppColors.lightSubtitle,
+                    ),
+                    SizedBox(height: isShortHeight ? 18 : AppSpacing.lg),
+                    Center(
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            width: imageWidth,
+                            height: imageHeight,
+                            child: Image.asset(
+                              AppImages.forgotPassword,
+                              fit: BoxFit.contain,
+                            ),
                           ),
-
-                          controller: _emailController,
-
-                          keyboardType: TextInputType.emailAddress,
-
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return l10n.pleaseEnterYourEmail;
-                            }
-
-                            if (!value.contains('@')) {
-                              return l10n.pleaseEnterValidEmail;
-                            }
-
-                            return null;
-                          },
-                        ),
-                      ),
-
-                      const SizedBox(height: 28),
-
-                      // ==================================================
-                      // SEND RESET LINK
-                      // ==================================================
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              context.go(Routes.verificationCode);
-                            }
-                          },
-
-                          child: Text(l10n.sendResetLink),
-                        ),
-                      ),
-
-                      const SizedBox(height: 100),
-
-                      // ==================================================
-                      // BACK TO SIGN IN
-                      // ==================================================
-                      TextButton(
-                        onPressed: () {
-                          context.go(Routes.login);
-                        },
-
-                        child: Text(
-                          l10n.backToSignIn,
-
-                          style: AppTextStyle.bodyMedium.copyWith(
-                            color: AppColors.needthis,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
+                          SizedBox(height: isShortHeight ? 18 : 28),
+                          Text(
+                            l10n.forgotPassword,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.headlineLarge?.copyWith(
+                              color: titleColor,
+                              fontWeight: FontWeight.w800,
+                              fontSize: titleFontSize,
+                            ),
                           ),
-                        ),
-                      ),
+                          const SizedBox(height: 8),
+                          Text(
+                            l10n.forgotPasswordDescription1,
+                            textAlign: TextAlign.center,
+                            style: AppTextStyle.bodyMedium.copyWith(
+                              color: subtitleColor,
+                              fontSize: descriptionFontSize,
+                            ),
+                          ),
+                          Text(
+                            l10n.forgotPasswordDescription2,
+                            textAlign: TextAlign.center,
+                            style: AppTextStyle.bodyMedium.copyWith(
+                              color: subtitleColor,
+                              fontSize: descriptionFontSize,
+                            ),
+                          ),
+                          SizedBox(height: isSmallWidth ? 20 : 28),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: AuthTextField(
+                              label: l10n.emailAddress,
+                              hintText: l10n.enterYourEmailAddress,
+                              prefixIcon: Icon(
+                                Icons.email_outlined,
+                                color: isDark
+                                    ? AppColors.darkSubtitle
+                                    : AppColors.lightSubtitle,
+                              ),
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return l10n.pleaseEnterYourEmail;
+                                }
 
-                      const SizedBox(height: AppSpacing.md),
-                    ],
-                  ),
+                                if (!value.contains('@')) {
+                                  return l10n.pleaseEnterValidEmail;
+                                }
+
+                                return null;
+                              },
+                            ),
+                          ),
+                          SizedBox(height: isSmallWidth ? 22 : 28),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                if (_formKey.currentState!.validate()) {
+                                  context.go(Routes.verificationCode);
+                                }
+                              },
+                              child: Text(l10n.sendResetLink),
+                            ),
+                          ),
+                          SizedBox(
+                            height: isShortHeight
+                                ? 40
+                                : isSmallWidth
+                                ? 60
+                                : 100,
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              context.go(Routes.login);
+                            },
+                            child: Text(
+                              l10n.backToSignIn,
+                              style: AppTextStyle.bodyMedium.copyWith(
+                                color: AppColors.needthis,
+                                fontSize: isSmallWidth ? 13 : 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

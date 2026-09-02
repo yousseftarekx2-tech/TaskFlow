@@ -14,21 +14,18 @@ class TaskSettings extends StatelessWidget {
     required this.task,
     required this.onEdit,
     required this.onCancel,
-    required Null Function() onDelete,
   });
 
   final TaskModel task;
   final VoidCallback onEdit;
   final VoidCallback onCancel;
 
-  // ============================================================
-  // DELETE CONFIRMATION
-  // ============================================================
-
   Future<void> _showDeleteConfirmation(BuildContext context) async {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colorScheme = theme.colorScheme;
     final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final bool isDark = theme.brightness == Brightness.dark;
+    final bool isSmallWidth = MediaQuery.sizeOf(context).width < 360;
 
     final bool? confirmed = await showDialog<bool>(
       context: context,
@@ -36,69 +33,87 @@ class TaskSettings extends StatelessWidget {
       builder: (dialogContext) {
         return AlertDialog(
           backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
-
-          title: Text(
-            l10n.deleteTask,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: isDark
-                  ? const Color(0xFFF8FAFC)
-                  : const Color(0xFF0F172A),
-            ),
+          titlePadding: EdgeInsets.fromLTRB(isSmallWidth ? 18 : 24, 18, 10, 8),
+          contentPadding: EdgeInsets.fromLTRB(
+            isSmallWidth ? 18 : 24,
+            4,
+            isSmallWidth ? 18 : 24,
+            8,
           ),
-
+          actionsPadding: EdgeInsets.fromLTRB(
+            isSmallWidth ? 18 : 24,
+            4,
+            isSmallWidth ? 18 : 24,
+            16,
+          ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.deleteTask,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: isSmallWidth ? 17 : 18,
+                    fontWeight: FontWeight.w700,
+                    color: isDark
+                        ? const Color(0xFFF8FAFC)
+                        : const Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop(false);
+                },
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                icon: Icon(
+                  Icons.close_rounded,
+                  size: 21,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
           content: Text(
             l10n.areYouSureDeleteTask,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: isSmallWidth ? 13 : 14,
               height: 1.4,
-              color: isDark
-                  ? const Color(0xFFCBD5E1)
-                  : const Color(0xFF64748B),
+              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF64748B),
             ),
           ),
-
           actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(false);
-              },
-              child: Text(
-                l10n.cancel,
-                style: TextStyle(
-                  color: isDark
-                      ? const Color(0xFFCBD5E1)
-                      : const Color(0xFF64748B),
-                  fontWeight: FontWeight.w600,
+            SizedBox(
+              width: double.infinity,
+              height: isSmallWidth ? 46 : 48,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop(true);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFEF4444),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSmallWidth ? 12 : 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-              ),
-            ),
-
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(true);
-              },
-
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEF4444),
-                foregroundColor: Colors.white,
-                elevation: 0,
-
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-
-              child: Text(
-                l10n.delete,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+                child: Text(
+                  l10n.delete,
+                  style: TextStyle(
+                    fontSize: isSmallWidth ? 12 : 13,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
@@ -111,40 +126,25 @@ class TaskSettings extends StatelessWidget {
       return;
     }
 
-    // ==========================================================
-    // DELETE TASK
-    // ==========================================================
-
     context.read<TaskBloc>().add(DeleteTask(task.id));
 
     if (!context.mounted) {
       return;
     }
 
-    // ==========================================================
-    // RETURN HOME
-    // ==========================================================
-
     context.go(Routes.home);
   }
 
-  // ============================================================
-  // BUILD
-  // ============================================================
-
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-
+    final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final Size screenSize = MediaQuery.sizeOf(context);
 
-    // ============================================================
-    // THEME COLORS
-    // ============================================================
+    final bool isDark = theme.brightness == Brightness.dark;
+    final bool isSmallWidth = screenSize.width < 360;
 
-    final Color cardColor = isDark
-        ? const Color(0xFF1E293B)
-        : Colors.white;
+    final Color cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
 
     final Color borderColor = isDark
         ? const Color(0xFF334155)
@@ -160,123 +160,101 @@ class TaskSettings extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-
-      padding: const EdgeInsets.fromLTRB(16, 16, 8, 16),
-
+      padding: EdgeInsets.fromLTRB(
+        isSmallWidth ? 12 : 16,
+        isSmallWidth ? 12 : 16,
+        isSmallWidth ? 6 : 8,
+        isSmallWidth ? 12 : 16,
+      ),
       decoration: BoxDecoration(
         color: cardColor,
-
         borderRadius: BorderRadius.circular(18),
-
-        border: Border.all(
-          color: borderColor,
-          width: 0.6,
-        ),
-
+        border: Border.all(color: borderColor, width: 0.6),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(
-              alpha: isDark ? 0.20 : 0.04,
-            ),
+            color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-
       child: Row(
         children: [
-          // ======================================================
-          // EDIT
-          // ======================================================
-
           Expanded(
             child: OutlinedButton.icon(
               onPressed: onEdit,
-
-              icon: const Icon(
-                Icons.edit_outlined,
-                size: 18,
-              ),
-
+              icon: Icon(Icons.edit_outlined, size: isSmallWidth ? 16 : 18),
               label: Text(
                 l10n.edit,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: isSmallWidth ? 12 : 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-
               style: OutlinedButton.styleFrom(
                 foregroundColor: editTextColor,
-
-                side: BorderSide(
-                  color: borderColor,
+                side: BorderSide(color: borderColor),
+                padding: EdgeInsets.symmetric(
+                  vertical: isSmallWidth ? 10 : 12,
+                  horizontal: isSmallWidth ? 6 : 10,
                 ),
-
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                ),
-
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
           ),
-
-          const SizedBox(width: 10),
-
-          // ======================================================
-          // DELETE
-          // ======================================================
-
+          SizedBox(width: isSmallWidth ? 7 : 10),
           Expanded(
             child: OutlinedButton.icon(
               onPressed: () {
                 _showDeleteConfirmation(context);
               },
-
-              icon: const Icon(
+              icon: Icon(
                 Icons.delete_outline_rounded,
-                size: 18,
+                size: isSmallWidth ? 16 : 18,
               ),
-
               label: Text(
                 l10n.delete,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: isSmallWidth ? 12 : 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFFEF4444),
-
                 side: BorderSide(
                   color: isDark
                       ? const Color(0xFF7F1D1D)
                       : const Color(0xFFFECACA),
                 ),
-
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
+                padding: EdgeInsets.symmetric(
+                  vertical: isSmallWidth ? 10 : 12,
+                  horizontal: isSmallWidth ? 6 : 10,
                 ),
-
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
           ),
-
-          const SizedBox(width: 6),
-
-          // ======================================================
-          // CLOSE
-          // ======================================================
-
+          SizedBox(width: isSmallWidth ? 2 : 6),
           IconButton(
             onPressed: onCancel,
-
+            padding: EdgeInsets.zero,
+            constraints: BoxConstraints(
+              minWidth: isSmallWidth ? 34 : 40,
+              minHeight: isSmallWidth ? 34 : 40,
+            ),
             icon: Icon(
               Icons.close_rounded,
-              size: 22,
+              size: isSmallWidth ? 20 : 22,
               color: closeIconColor,
             ),
-
             tooltip: l10n.close,
           ),
         ],

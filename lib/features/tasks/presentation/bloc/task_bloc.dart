@@ -13,24 +13,22 @@ import 'task_state.dart';
 
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
   final TaskStorage taskStorage;
-
   final NotificationCubit notificationCubit;
-
   final SettingsStorage settingsStorage;
 
   final List<TaskModel> _tasks = [];
 
   Timer? _overdueTimer;
-
   Timer? _reminderTimer;
 
   bool _isLoaded = false;
 
   Future<void>? _loadingFuture;
 
-  // ============================================================
-  // CONSTRUCTOR
-  // ============================================================
+  static const Duration overdueDuration = Duration(hours: 1);
+
+  final Set<String> _sentReminderTaskIds = {};
+  final Set<String> _sentOverdueTaskIds = {};
 
   TaskBloc(this.taskStorage, this.notificationCubit, this.settingsStorage)
     : super(const TaskInitial()) {
@@ -45,10 +43,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     _startOverdueChecker();
     _startReminderChecker();
   }
-
-  // ============================================================
-  // ENSURE TASKS ARE LOADED
-  // ============================================================
 
   Future<void> _ensureTasksLoaded() async {
     if (_isLoaded) {
@@ -70,10 +64,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     _isLoaded = true;
   }
 
-  // ============================================================
-  // LOAD TASKS
-  // ============================================================
-
   Future<void> _onLoadTasks(LoadTasks event, Emitter<TaskState> emit) async {
     emit(const TaskLoading());
 
@@ -81,26 +71,22 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       await _ensureTasksLoaded();
 
       _checkOverdueTasks();
-
       await _checkTaskReminders();
 
       emit(TaskLoaded(List.unmodifiable(_tasks)));
-    } catch (e) {
+    } catch (_) {
       emit(const TaskError('Failed to load tasks.'));
     }
   }
-
-  // ============================================================
-  // ADD TASK
-  // ============================================================
 
   Future<void> _onAddTask(AddTask event, Emitter<TaskState> emit) async {
     await _ensureTasksLoaded();
 
     final TaskModel task = event.task;
+    final DateTime overdueAt = task.scheduledAt.add(overdueDuration);
 
     final bool isAlreadyOverdue =
-        task.isPending && DateTime.now().isAfter(task.scheduledAt);
+        task.isPending && !DateTime.now().isBefore(overdueAt);
 
     final TaskModel updatedTask = isAlreadyOverdue
         ? task.copyWith(status: TaskStatus.overdue)
@@ -110,26 +96,14 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
     await taskStorage.saveTasks(List.unmodifiable(_tasks));
 
-    // ============================================================
-    // OVERDUE NOTIFICATION
-    // ============================================================
-
     if (isAlreadyOverdue) {
       await _addOverdueNotification(updatedTask);
     }
-
-    // ============================================================
-    // CHECK REMINDER
-    // ============================================================
 
     await _checkTaskReminders();
 
     emit(TaskLoaded(List.unmodifiable(_tasks)));
   }
-
-  // ============================================================
-  // COMPLETE TASK
-  // ============================================================
 
   Future<void> _onCompleteTask(
     CompleteTask event,
@@ -145,21 +119,32 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
     final TaskModel task = _tasks[index];
 
-    // ============================================================
-    // PREVENT DUPLICATE COMPLETION
-    // ============================================================
-
     if (task.status == TaskStatus.completed) {
+      return;
+    }
+
+    if (!task.isPending) {
+      return;
+    }
+
+    final DateTime now = DateTime.now();
+    final DateTime startTime = task.scheduledAt;
+    final DateTime overdueTime = task.scheduledAt.add(overdueDuration);
+
+    if (now.isBefore(startTime)) {
+      return;
+    }
+
+    if (!now.isBefore(overdueTime)) {
       return;
     }
 
     _tasks[index] = task.copyWith(status: TaskStatus.completed);
 
-    await taskStorage.saveTasks(List.unmodifiable(_tasks));
+    _sentReminderTaskIds.remove(task.id);
+    _sentOverdueTaskIds.remove(task.id);
 
-    // ============================================================
-    // COMPLETED NOTIFICATION
-    // ============================================================
+    await taskStorage.saveTasks(List.unmodifiable(_tasks));
 
     await notificationCubit.addNotification(
       type: NotificationType.taskCompleted,
@@ -169,10 +154,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
     emit(TaskLoaded(List.unmodifiable(_tasks)));
   }
-
-  // ============================================================
-  // MARK TASK OVERDUE
-  // ============================================================
 
   Future<void> _onMarkTaskOverdue(
     MarkTaskOverdue event,
@@ -188,30 +169,30 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
     final TaskModel task = _tasks[index];
 
-    // ============================================================
-    // PREVENT DUPLICATE OVERDUE NOTIFICATION
-    // ============================================================
-
     if (task.status == TaskStatus.overdue) {
+      return;
+    }
+
+    if (!task.isPending) {
+      return;
+    }
+
+    final DateTime overdueTime = task.scheduledAt.add(overdueDuration);
+
+    if (DateTime.now().isBefore(overdueTime)) {
       return;
     }
 
     _tasks[index] = task.copyWith(status: TaskStatus.overdue);
 
-    await taskStorage.saveTasks(List.unmodifiable(_tasks));
+    _sentReminderTaskIds.remove(task.id);
 
-    // ============================================================
-    // OVERDUE NOTIFICATION
-    // ============================================================
+    await taskStorage.saveTasks(List.unmodifiable(_tasks));
 
     await _addOverdueNotification(_tasks[index]);
 
     emit(TaskLoaded(List.unmodifiable(_tasks)));
   }
-
-  // ============================================================
-  // UPDATE TASK
-  // ============================================================
 
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TaskState> emit) async {
     await _ensureTasksLoaded();
@@ -222,32 +203,34 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       return;
     }
 
-    _tasks[index] = event.task;
+    final TaskModel oldTask = _tasks[index];
+    final TaskModel updatedTask = event.task;
+
+    if (oldTask.scheduledAt != updatedTask.scheduledAt) {
+      _sentReminderTaskIds.remove(updatedTask.id);
+      _sentOverdueTaskIds.remove(updatedTask.id);
+    }
+
+    _tasks[index] = updatedTask;
 
     await taskStorage.saveTasks(List.unmodifiable(_tasks));
-
     await _checkTaskReminders();
 
     emit(TaskLoaded(List.unmodifiable(_tasks)));
   }
-
-  // ============================================================
-  // DELETE TASK
-  // ============================================================
 
   Future<void> _onDeleteTask(DeleteTask event, Emitter<TaskState> emit) async {
     await _ensureTasksLoaded();
 
     _tasks.removeWhere((task) => task.id == event.taskId);
 
+    _sentReminderTaskIds.remove(event.taskId);
+    _sentOverdueTaskIds.remove(event.taskId);
+
     await taskStorage.saveTasks(List.unmodifiable(_tasks));
 
     emit(TaskLoaded(List.unmodifiable(_tasks)));
   }
-
-  // ============================================================
-  // REFRESH TASKS
-  // ============================================================
 
   Future<void> _onRefreshTasks(
     RefreshTasks event,
@@ -257,10 +240,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
     emit(TaskLoaded(List.unmodifiable(_tasks)));
   }
-
-  // ============================================================
-  // OVERDUE CHECKER
-  // ============================================================
 
   void _startOverdueChecker() {
     _overdueTimer = Timer.periodic(const Duration(minutes: 1), (_) {
@@ -274,47 +253,49 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     }
 
     final DateTime now = DateTime.now();
-
     bool hasChanges = false;
 
     for (int i = 0; i < _tasks.length; i++) {
       final TaskModel task = _tasks[i];
 
-      if (task.isPending && !now.isBefore(task.scheduledAt)) {
-        final TaskModel overdueTask = task.copyWith(status: TaskStatus.overdue);
-
-        _tasks[i] = overdueTask;
-
-        hasChanges = true;
-
-        // ========================================================
-        // OVERDUE NOTIFICATION
-        // ========================================================
-
-        _addOverdueNotification(overdueTask);
+      if (!task.isPending) {
+        continue;
       }
+
+      final DateTime overdueTime = task.scheduledAt.add(overdueDuration);
+
+      if (now.isBefore(overdueTime)) {
+        continue;
+      }
+
+      final TaskModel overdueTask = task.copyWith(status: TaskStatus.overdue);
+
+      _tasks[i] = overdueTask;
+      hasChanges = true;
+
+      if (!_sentOverdueTaskIds.contains(overdueTask.id)) {
+        _sentOverdueTaskIds.add(overdueTask.id);
+
+        unawaited(_addOverdueNotification(overdueTask));
+      }
+
+      _sentReminderTaskIds.remove(overdueTask.id);
     }
 
-    if (hasChanges) {
-      taskStorage.saveTasks(List.unmodifiable(_tasks));
-
-      add(const RefreshTasks());
+    if (!hasChanges) {
+      return;
     }
+
+    unawaited(taskStorage.saveTasks(List.unmodifiable(_tasks)));
+
+    add(const RefreshTasks());
   }
-
-  // ============================================================
-  // REMINDER CHECKER
-  // ============================================================
 
   void _startReminderChecker() {
     _reminderTimer = Timer.periodic(const Duration(minutes: 1), (_) {
-      _checkTaskReminders();
+      unawaited(_checkTaskReminders());
     });
   }
-
-  // ============================================================
-  // CHECK TASK REMINDERS
-  // ============================================================
 
   Future<void> _checkTaskReminders() async {
     if (_tasks.isEmpty || isClosed || !_isLoaded) {
@@ -336,41 +317,27 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     final DateTime now = DateTime.now();
 
     for (final TaskModel task in _tasks) {
-      // ==========================================================
-      // ONLY PENDING TASKS
-      // ==========================================================
-
       if (!task.isPending) {
         continue;
       }
-
-      // ==========================================================
-      // REMINDER TIME
-      // ==========================================================
 
       final DateTime reminderTime = task.scheduledAt.subtract(
         Duration(minutes: reminderMinutes),
       );
 
-      // ==========================================================
-      // TOO EARLY
-      // ==========================================================
-
       if (now.isBefore(reminderTime)) {
         continue;
       }
-
-      // ==========================================================
-      // TASK ALREADY STARTED / OVERDUE
-      // ==========================================================
 
       if (!now.isBefore(task.scheduledAt)) {
         continue;
       }
 
-      // ==========================================================
-      // SEND REMINDER
-      // ==========================================================
+      if (_sentReminderTaskIds.contains(task.id)) {
+        continue;
+      }
+
+      _sentReminderTaskIds.add(task.id);
 
       await notificationCubit.addNotification(
         type: NotificationType.taskReminder,
@@ -380,21 +347,19 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     }
   }
 
-  // ============================================================
-  // ADD OVERDUE NOTIFICATION
-  // ============================================================
-
   Future<void> _addOverdueNotification(TaskModel task) async {
+    if (_sentOverdueTaskIds.contains(task.id)) {
+      return;
+    }
+
+    _sentOverdueTaskIds.add(task.id);
+
     await notificationCubit.addNotification(
       type: NotificationType.taskOverdue,
       taskId: task.id,
       taskTitle: task.title,
     );
   }
-
-  // ============================================================
-  // DISPOSE
-  // ============================================================
 
   @override
   Future<void> close() {

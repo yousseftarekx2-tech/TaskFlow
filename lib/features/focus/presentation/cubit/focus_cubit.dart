@@ -14,10 +14,6 @@ class FocusCubit extends Cubit<FocusState> {
 
   Timer? _timer;
 
-  // ============================================================
-  // START
-  // ============================================================
-
   void startTimer() {
     if (state.isRunning ||
         state.allSessionsCompleted ||
@@ -29,14 +25,8 @@ class FocusCubit extends Cubit<FocusState> {
 
     emit(state.copyWith(isRunning: true, status: FocusStatus.running));
 
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _tick();
-    });
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
   }
-
-  // ============================================================
-  // TICK
-  // ============================================================
 
   void _tick() {
     if (isClosed) {
@@ -52,10 +42,6 @@ class FocusCubit extends Cubit<FocusState> {
     _finishCurrentTimer();
   }
 
-  // ============================================================
-  // PAUSE
-  // ============================================================
-
   void pauseTimer() {
     if (!state.isRunning) {
       return;
@@ -67,10 +53,6 @@ class FocusCubit extends Cubit<FocusState> {
     emit(state.copyWith(isRunning: false, status: FocusStatus.paused));
   }
 
-  // ============================================================
-  // RESUME
-  // ============================================================
-
   void resumeTimer() {
     if (state.isRunning ||
         state.allSessionsCompleted ||
@@ -80,10 +62,6 @@ class FocusCubit extends Cubit<FocusState> {
 
     startTimer();
   }
-
-  // ============================================================
-  // RESET
-  // ============================================================
 
   void resetTimer() {
     _timer?.cancel();
@@ -102,10 +80,6 @@ class FocusCubit extends Cubit<FocusState> {
     );
   }
 
-  // ============================================================
-  // SELECT DURATION
-  // ============================================================
-
   void selectDuration(int duration) {
     if (state.isRunning || state.isBreak || state.allSessionsCompleted) {
       return;
@@ -123,23 +97,11 @@ class FocusCubit extends Cubit<FocusState> {
     );
   }
 
-  // ============================================================
-  // FINISH CURRENT TIMER
-  // ============================================================
-
   Future<void> _finishCurrentTimer() async {
     _timer?.cancel();
     _timer = null;
 
-    // ============================================================
-    // BREAK FINISHED
-    // ============================================================
-
     if (state.isBreak) {
-      // ----------------------------------------------------------
-      // BREAK FINISHED NOTIFICATION
-      // ----------------------------------------------------------
-
       await notificationCubit.addNotification(
         type: NotificationType.breakFinished,
       );
@@ -166,16 +128,8 @@ class FocusCubit extends Cubit<FocusState> {
       return;
     }
 
-    // ============================================================
-    // FOCUS FINISHED
-    // ============================================================
-
     final int completedMinutes =
         state.completedFocusMinutes + state.selectedDuration;
-
-    // ------------------------------------------------------------
-    // FOCUS SESSION FINISHED NOTIFICATION
-    // ------------------------------------------------------------
 
     await notificationCubit.addNotification(
       type: NotificationType.focusSessionFinished,
@@ -184,10 +138,6 @@ class FocusCubit extends Cubit<FocusState> {
     if (isClosed) {
       return;
     }
-
-    // ============================================================
-    // LAST SESSION
-    // ============================================================
 
     if (state.currentSession >= state.totalSessions) {
       emit(
@@ -204,15 +154,7 @@ class FocusCubit extends Cubit<FocusState> {
       return;
     }
 
-    // ============================================================
-    // START BREAK
-    // ============================================================
-
     final int breakSeconds = state.breakDuration * 60;
-
-    // ------------------------------------------------------------
-    // BREAK STARTED NOTIFICATION
-    // ------------------------------------------------------------
 
     await notificationCubit.addNotification(
       type: NotificationType.breakStarted,
@@ -233,10 +175,6 @@ class FocusCubit extends Cubit<FocusState> {
       ),
     );
   }
-
-  // ============================================================
-  // DISPOSE
-  // ============================================================
 
   @override
   Future<void> close() {

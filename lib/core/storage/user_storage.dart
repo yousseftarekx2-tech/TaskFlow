@@ -8,10 +8,6 @@ class UserStorage {
   static const String _isLoggedInKey = 'is_logged_in';
   static const String _onboardingCompletedKey = 'onboarding_completed';
 
-  // ============================================================
-  // REGISTERED USER
-  // ============================================================
-
   Future<void> saveUser(UserModel user) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -37,10 +33,6 @@ class UserStorage {
     }
   }
 
-  // ============================================================
-  // LOGIN SESSION
-  // ============================================================
-
   Future<void> setLoggedIn(bool value) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -59,10 +51,6 @@ class UserStorage {
     await prefs.setBool(_isLoggedInKey, false);
   }
 
-  // ============================================================
-  // ONBOARDING
-  // ============================================================
-
   Future<void> setOnboardingCompleted() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -74,10 +62,6 @@ class UserStorage {
 
     return prefs.getBool(_onboardingCompletedKey) ?? false;
   }
-
-  // ============================================================
-  // CLEAR EVERYTHING
-  // ============================================================
 
   Future<void> clearUser() async {
     final prefs = await SharedPreferences.getInstance();

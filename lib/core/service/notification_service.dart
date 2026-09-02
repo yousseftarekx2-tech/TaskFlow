@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -17,20 +18,10 @@ class LocalNotificationService {
 
   final SettingsStorage _settingsStorage = SettingsStorage();
 
-  // ============================================================
-  // CHANNELS
-  // ============================================================
-
   static const String _soundChannelId = 'task_flow_notifications_sound';
-
   static const String _silentChannelId = 'task_flow_notifications_silent';
 
-  // ============================================================
-  // INITIALIZE
-  // ============================================================
-
   Future<void> initialize() async {
-    // Initialize timezone database.
     tz.initializeTimeZones();
 
     const AndroidInitializationSettings androidSettings =
@@ -43,13 +34,8 @@ class LocalNotificationService {
     await _plugin.initialize(settings: settings);
 
     await _createChannels();
-
     await requestNotificationPermission();
   }
-
-  // ============================================================
-  // CHANNELS
-  // ============================================================
 
   Future<void> _createChannels() async {
     const AndroidNotificationChannel soundChannel = AndroidNotificationChannel(
@@ -74,13 +60,8 @@ class LocalNotificationService {
         >();
 
     await androidPlugin?.createNotificationChannel(soundChannel);
-
     await androidPlugin?.createNotificationChannel(silentChannel);
   }
-
-  // ============================================================
-  // PERMISSION
-  // ============================================================
 
   Future<bool> requestNotificationPermission() async {
     final AndroidFlutterLocalNotificationsPlugin? androidPlugin = _plugin
@@ -92,10 +73,6 @@ class LocalNotificationService {
 
     return granted ?? true;
   }
-
-  // ============================================================
-  // SHOW IMMEDIATE NOTIFICATION
-  // ============================================================
 
   Future<void> showNotification({
     required int id,
@@ -134,10 +111,6 @@ class LocalNotificationService {
     );
   }
 
-  // ============================================================
-  // DAILY APP NOTIFICATION
-  // ============================================================
-
   Future<void> scheduleDailyAppNotification({
     required bool soundEnabled,
     int hour = 10,
@@ -156,10 +129,6 @@ class LocalNotificationService {
       payload: 'daily_app',
     );
   }
-
-  // ============================================================
-  // STREAK NOTIFICATION
-  // ============================================================
 
   Future<void> scheduleDailyStreakNotification({
     required bool soundEnabled,
@@ -180,18 +149,12 @@ class LocalNotificationService {
       scheduledDate: _nextTime(hour, minute),
       notificationDetails: _notificationDetails(soundEnabled),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.time,
       payload: 'streak',
     );
   }
 
-  // ============================================================
-  // GET LOCALIZATIONS
-  // ============================================================
-
   Future<AppLocalizations> _getLocalizations() async {
     final String language = await _settingsStorage.getLanguage();
-
     final String normalizedLanguage = language.trim().toLowerCase();
 
     final Locale locale =
@@ -205,33 +168,17 @@ class LocalNotificationService {
     return lookupAppLocalizations(locale);
   }
 
-  // ============================================================
-  // CANCEL DAILY APP
-  // ============================================================
-
   Future<void> cancelDailyAppNotification() async {
     await _plugin.cancel(id: 1001);
   }
-
-  // ============================================================
-  // CANCEL STREAK
-  // ============================================================
 
   Future<void> cancelStreakNotification() async {
     await _plugin.cancel(id: 1002);
   }
 
-  // ============================================================
-  // CANCEL ALL
-  // ============================================================
-
   Future<void> cancelAll() async {
     await _plugin.cancelAll();
   }
-
-  // ============================================================
-  // DETAILS
-  // ============================================================
 
   NotificationDetails _notificationDetails(bool soundEnabled) {
     final String channelId = soundEnabled ? _soundChannelId : _silentChannelId;
@@ -252,10 +199,6 @@ class LocalNotificationService {
       ),
     );
   }
-
-  // ============================================================
-  // NEXT TIME
-  // ============================================================
 
   tz.TZDateTime _nextTime(int hour, int minute) {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);

@@ -17,43 +17,23 @@ class TaskFlowApp extends StatelessWidget {
           previous.darkModeEnabled != current.darkModeEnabled ||
           previous.selectedLanguage != current.selectedLanguage,
       builder: (context, state) {
-        // ============================================================
-        // LANGUAGE
-        // ============================================================
-
         final Locale locale = state.selectedLanguage == 'ar'
             ? const Locale('ar')
             : const Locale('en');
 
         return MaterialApp.router(
           debugShowCheckedModeBanner: false,
-
-          // ============================================================
-          // THEME
-          // ============================================================
           theme: AppTheme.lightTheme,
-
           darkTheme: AppTheme.darkTheme,
-
           themeMode: state.darkModeEnabled ? ThemeMode.dark : ThemeMode.light,
-
-          // ============================================================
-          // LOCALIZATION
-          // ============================================================
           locale: locale,
-
           supportedLocales: const [Locale('en'), Locale('ar')],
-
           localizationsDelegates: const [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-
-          // ============================================================
-          // ROUTER
-          // ============================================================
           routerConfig: AppRouter.router,
         );
       },

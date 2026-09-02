@@ -17,49 +17,53 @@ class OnboardingWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final screenSize = MediaQuery.sizeOf(context);
+
+    final bool isSmallWidth = screenSize.width < 360;
+    final bool isShortScreen = screenSize.height < 700;
+
+    final double horizontalPadding = isSmallWidth ? 20 : 32;
+
+    final double topSpacing = isShortScreen ? 12 : 20;
+
+    final double imageHeight = isShortScreen
+        ? (screenSize.height * 0.34).clamp(220.0, 290.0)
+        : (screenSize.height * 0.38).clamp(260.0, 340.0);
+
+    final double titleFontSize = isSmallWidth ? 26 : 30;
+
+    final double titleSpacing = isShortScreen ? AppSpacing.md : AppSpacing.lg;
+
+    final double descriptionFontSize = isSmallWidth ? 14 : 15;
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
         child: Column(
           children: [
-            const SizedBox(height: 20),
-
-            // --------------------------------------------------
-            // Illustration
-            // --------------------------------------------------
+            SizedBox(height: topSpacing),
             Image.asset(
               image,
               width: double.infinity,
-              height: 340,
-              fit: BoxFit.cover,
+              height: imageHeight,
+              fit: BoxFit.contain,
             ),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            // --------------------------------------------------
-            // Title
-            // --------------------------------------------------
+            SizedBox(height: titleSpacing),
             Text(
               title,
               textAlign: TextAlign.center,
               style: theme.textTheme.headlineMedium?.copyWith(
-                fontSize: 30,
+                fontSize: titleFontSize,
                 fontWeight: FontWeight.w700,
-                color: theme.colorScheme.onBackground,
+                color: theme.colorScheme.onSurface,
               ),
             ),
-
             const SizedBox(height: AppSpacing.sm),
-
-            // --------------------------------------------------
-            // Description
-            // --------------------------------------------------
             Text(
               description,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                fontSize: 15,
+                fontSize: descriptionFontSize,
                 height: 1.5,
                 color: theme.textTheme.bodyMedium?.color,
               ),

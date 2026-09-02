@@ -234,116 +234,69 @@
   "getStarted": "ابدأ الآن",
   "skip": "تخطي",
 
-"tomorrow": "غدًا",
-"inDays": "خلال {days} أيام",
-"@inDays": {
-  "description": "يعرض عدد الأيام المتبقية حتى موعد المهمة القادمة.",
-  "placeholders": {
-    "days": {
-      "type": "int"
+  "tomorrow": "غدًا",
+  "inDays": "خلال {days} أيام",
+  "@inDays": {
+    "description": "يعرض عدد الأيام المتبقية حتى موعد المهمة القادمة.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
     }
-  }
-},
+  },
 
-"main": "الرئيسية",
-"home": "الرئيسية",
-"focus": "التركيز",
-"statistics": "الإحصائيات",
-"allTasks": "كل المهام",
-"completedTasks": "المهام المكتملة",
-"logout": "تسجيل الخروج",
+  "main": "الرئيسية",
+  "home": "الرئيسية",
+  "focus": "التركيز",
+  "statistics": "الإحصائيات",
+  "allTasks": "كل المهام",
+  "completedTasks": "المهام المكتملة",
+  "logout": "تسجيل الخروج",
 
-"readAll": "قراءة الكل",
-"recentNotifications": "الإشعارات الأخيرة",
-"stayUpdatedWithYourTasks": "ابقَ على اطلاع بمهامك.",
-"unreadCount": "{count} غير مقروءة",
-"taskCompletedNotification": "اكتملت المهمة",
-"completedFlutterUiTask": "لقد أكملت مهمة واجهة Flutter الخاصة بك.",
-"taskOverdueNotification": "مهمة متأخرة",
-"overdueTaskMessage": "مهمة \"مراجعة تصميم المشروع\" متأخرة.",
-"taskReminderNotification": "تذكير بمهمة",
-"taskStartsIn30Minutes": "تبدأ مهمة التطوير الخاصة بك خلال 30 دقيقة.",
-"completedTeamMeetingTask": "لقد أكملت مهمة اجتماع الفريق.",
-"minutesAgo": "منذ {count} دقائق",
-"hourAgo": "منذ {count} ساعة",
-"yesterday": "أمس",
-"noNotifications": "لا توجد إشعارات",
-"allCaughtUp": "أنت على اطلاع بكل شيء. ستظهر هنا تحديثات المهام والتذكيرات الجديدة.",
+  "readAll": "قراءة الكل",
+  "recentNotifications": "الإشعارات الأخيرة",
+  "stayUpdatedWithYourTasks": "ابقَ على اطلاع بمهامك.",
+  "unreadCount": "{count} غير مقروءة",
+  "taskCompletedNotification": "اكتملت المهمة",
+  "completedFlutterUiTask": "لقد أكملت مهمة واجهة Flutter الخاصة بك.",
+  "taskOverdueNotification": "مهمة متأخرة",
+  "overdueTaskMessage": "مهمة \"مراجعة تصميم المشروع\" متأخرة.",
+  "taskReminderNotification": "تذكير بمهمة",
+  "taskStartsIn30Minutes": "تبدأ مهمة التطوير الخاصة بك خلال 30 دقيقة.",
+  "completedTeamMeetingTask": "لقد أكملت مهمة اجتماع الفريق.",
+  "minutesAgo": "منذ {count} دقائق",
+  "hourAgo": "منذ {count} ساعة",
+  "yesterday": "أمس",
+  "noNotifications": "لا توجد إشعارات",
+  "allCaughtUp": "أنت على اطلاع بكل شيء. ستظهر هنا تحديثات المهام والتذكيرات الجديدة.",
 
-"taskDetails": "تفاصيل المهمة",
-"status": "الحالة",
-"completed": "مكتملة",
-"overdue": "متأخرة",
-"pending": "قيد الانتظار",
-"description": "الوصف",
-"noDescriptionAdded": "لم تتم إضافة وصف.",
-"scheduledDate": "التاريخ المحدد",
-"editTask": "تعديل المهمة",
-"deleteTask": "حذف المهمة",
-"deleteTaskTitle": "حذف المهمة",
-"deleteTaskConfirmation": "هل أنت متأكد أنك تريد حذف هذه المهمة؟ لا يمكن التراجع عن هذا الإجراء.",
-"cancel": "إلغاء",
+  "taskDetails": "تفاصيل المهمة",
+  "status": "الحالة",
+  "description": "الوصف",
+  "noDescriptionAdded": "لم تتم إضافة وصف.",
+  "scheduledDate": "التاريخ المحدد",
+  "deleteTask": "حذف المهمة",
+  "deleteTaskTitle": "حذف المهمة",
+  "deleteTaskConfirmation": "هل أنت متأكد أنك تريد حذف هذه المهمة؟ لا يمكن التراجع عن هذا الإجراء.",
+  "areYouSureDeleteTask": "هل أنت متأكد أنك تريد حذف هذه المهمة؟ لا يمكن التراجع عن هذا الإجراء.",
+  "delete": "حذف",
+  "edit": "تعديل",
+  "close": "إغلاق",
 
-"deleteTask": "حذف المهمة",
-"areYouSureDeleteTask": "هل أنت متأكد أنك تريد حذف هذه المهمة؟ لا يمكن التراجع عن هذا الإجراء.",
-"cancel": "إلغاء",
-"delete": "حذف",
-"edit": "تعديل",
-"close": "إغلاق",
+  "noUserDataFound": "لا توجد بيانات للمستخدم",
+  "nameCannotBeEmpty": "لا يمكن أن يكون الاسم فارغًا",
+  "profileUpdatedSuccessfully": "تم تحديث الملف الشخصي بنجاح",
+  "profilePhotoPickerWillBeAddedLater": "سيتم إضافة اختيار صورة الملف الشخصي لاحقًا",
+  "changePasswordWillBeAddedLater": "سيتم إضافة تغيير كلمة المرور لاحقًا",
 
-"noUserDataFound": "لا توجد بيانات للمستخدم",
-"nameCannotBeEmpty": "لا يمكن أن يكون الاسم فارغًا",
-"profileUpdatedSuccessfully": "تم تحديث الملف الشخصي بنجاح",
-"profilePhotoPickerWillBeAddedLater": "سيتم إضافة اختيار صورة الملف الشخصي لاحقًا",
-"changePasswordWillBeAddedLater": "سيتم إضافة تغيير كلمة المرور لاحقًا",
+  "profile": "الملف الشخصي",
+  "personalInformation": "المعلومات الشخصية",
+  "security": "الأمان",
+  "changePassword": "تغيير كلمة المرور",
+  "updateYourAccountPassword": "تحديث كلمة مرور حسابك",
 
-"profile": "الملف الشخصي",
-"personalInformation": "المعلومات الشخصية",
-"security": "الأمان",
-"changePassword": "تغيير كلمة المرور",
-"updateYourAccountPassword": "تحديث كلمة مرور حسابك",
-
-"profile": "الملف الشخصي",
-"noUserDataFound": "لم يتم العثور على بيانات المستخدم",
-"personalInformation": "المعلومات الشخصية",
-"changePassword": "تغيير كلمة المرور",
-"updateYourAccountPassword": "تحديث كلمة مرور حسابك",
-"nameCannotBeEmpty": "لا يمكن أن يكون الاسم فارغًا",
-"profileUpdatedSuccessfully": "تم تحديث الملف الشخصي بنجاح",
-"profilePhotoPickerWillBeAddedLater": "سيتم إضافة اختيار صورة الملف الشخصي لاحقًا",
-"security": "الأمان",
-
-"settings": "الإعدادات",
-"preferences": "التفضيلات",
-"notifications": "الإشعارات",
-"manageTaskReminders": "إدارة تذكيرات المهام",
-"sound": "الصوت",
-"manageSoundsAlerts": "إدارة الأصوات والتنبيهات",
-"darkMode": "الوضع الداكن",
-"useDarkAppearance": "استخدام المظهر الداكن",
-"language": "اللغة",
-
-"productivity": "الإنتاجية",
-"habits": "العادات",
-"manageProductivityHabits": "إدارة عادات الإنتاجية",
-
-"information": "معلومات",
-"aboutTaskFlow": "عن TaskFlow",
-"learnMoreAboutTaskFlow": "تعرف على المزيد عن TaskFlow",
-"privacy": "الخصوصية",
-"privacyAndData": "الخصوصية والبيانات",
-"termsOfService": "شروط الخدمة",
-"reviewOurTerms": "مراجعة شروط الخدمة",
-
-"english": "الإنجليزية",
-"arabic": "العربية",
-
-"taskFlow": "TaskFlow",
-"version": "الإصدار 1.0.0",
   "splashTagline": "خطط. ركّز. أنجز مهامك.",
 
-
-  "statistics": "الإحصائيات",
   "trackYourProductivity": "تابع مستوى إنتاجيتك",
 
   "week": "أسبوع",
@@ -351,16 +304,11 @@
   "year": "سنة",
 
   "totalTasks": "إجمالي المهام",
-  "completed": "مكتملة",
-  "pending": "معلقة",
-  "overdue": "متأخرة",
-
   "completionOverview": "نظرة عامة على الإنجاز",
 
   "weeklyProductivity": "الإنتاجية الأسبوعية",
   "tasksCompletedPerDay": "المهام المكتملة يوميًا",
 
-  "categories": "التصنيفات",
   "noCategoryDataAvailable": "لا توجد بيانات متاحة للتصنيفات",
 
   "insights": "التحليلات",
@@ -370,7 +318,6 @@
   "currentStreak": "سلسلة الإنجاز الحالية",
 
   "days": "يوم",
-  "tasks": "مهام",
 
   "monday": "الاثنين",
   "tuesday": "الثلاثاء",
@@ -380,18 +327,7 @@
   "saturday": "السبت",
   "sunday": "الأحد",
 
-  "sat": "السبت",
-  "sun": "الأحد",
-  "mon": "الاثنين",
-  "tue": "الثلاثاء",
-  "wed": "الأربعاء",
-  "thu": "الخميس",
-  "fri": "الجمعة",
-
-  "allTasks": "كل المهام",
   "noTasksYet": "لا توجد مهام حتى الآن",
-  "am": "ص",
-  "pm": "م",
 
   "categoryNoTasks": "لا توجد مهام في {categoryName}",
   "@categoryNoTasks": {
@@ -405,35 +341,24 @@
   "categoryTasksDescription": "ستظهر هنا المهام المضافة إلى هذا التصنيف.",
   "categoryDateTimeSeparator": " • ",
 
-  "completedTasks": "المهام المكتملة",
-"noCompletedTasks": "لا توجد مهام مكتملة",
+  "noCompletedTasks": "لا توجد مهام مكتملة",
 
-"createTaskTitle": "إنشاء مهمة",
-"editTaskTitle": "تعديل المهمة",
-"taskTitleLabel": "عنوان المهمة",
-"taskTitleHint": "أدخل عنوان المهمة",
-"descriptionLabel": "الوصف",
-"descriptionHint": "أضف وصفًا للمهمة (اختياري)",
-"categoryLabel": "الفئة",
-"noCategoriesYet": "لا توجد فئات بعد",
-"addCategory": "إضافة",
-"dateLabel": "التاريخ",
-"timeLabel": "الوقت",
-"selectDate": "اختر التاريخ",
-"selectTime": "اختر الوقت",
-"saveChanges": "حفظ التغييرات",
-"createTask": "إنشاء المهمة",
-"taskTitleRequired": "من فضلك أدخل عنوان المهمة",
-"categoryRequired": "من فضلك اختر فئة",
-"dateRequired": "من فضلك اختر التاريخ",
-"timeRequired": "من فضلك اختر الوقت",
-"taskCreatedSuccessfully": "تم إنشاء المهمة بنجاح",
-"addCategoryTitle": "إضافة فئة",
-"categoryNameLabel": "اسم الفئة",
-"categoryNameHint": "أدخل اسم الفئة",
-"chooseColor": "اختر اللون",
-"cancel": "إلغاء",
-
+  "createTaskTitle": "إنشاء مهمة",
+  "editTaskTitle": "تعديل المهمة",
+  "taskTitleLabel": "عنوان المهمة",
+  "taskTitleHint": "أدخل عنوان المهمة",
+  "descriptionLabel": "الوصف",
+  "descriptionHint": "أضف وصفًا للمهمة (اختياري)",
+  "categoryLabel": "الفئة",
+  "dateLabel": "التاريخ",
+  "timeLabel": "الوقت",
+  "taskTitleRequired": "من فضلك أدخل عنوان المهمة",
+  "categoryRequired": "من فضلك اختر فئة",
+  "dateRequired": "من فضلك اختر التاريخ",
+  "timeRequired": "من فضلك اختر الوقت",
+  "addCategoryTitle": "إضافة فئة",
+  "categoryNameLabel": "اسم الفئة",
+  "categoryNameHint": "أدخل اسم الفئة",
 
   "notificationSettings": "إعدادات الإشعارات",
   "enableOrDisableAllNotifications": "تفعيل أو تعطيل جميع الإشعارات",
@@ -450,6 +375,7 @@
       }
     }
   },
+
   "focusNotifications": "إشعارات التركيز",
   "receiveFocusSessionNotifications": "استلام الإشعارات المتعلقة بجلسات التركيز",
   "focusSessionFinished": "انتهاء جلسة التركيز",
@@ -468,7 +394,6 @@
   "breakFinishedMessage": "انتهت الاستراحة. مستعد للتركيز مرة أخرى؟",
   "justNow": "الآن",
 
-  
   "notificationTaskCompletedTitle": "تم إكمال المهمة",
   "notificationTaskCompletedBody": "لقد أكملت مهمة. أحسنت!",
 
@@ -508,8 +433,6 @@
     }
   },
 
-
-  
   "habitsIntro": "أنشئ عادات يومية صحية، وتابع تقدمك، وحافظ على الاستمرارية لتحقيق أهدافك.",
   "habitsComingSoon": "العادات قادمة قريبًا",
   "habitsComingSoonDescription": "نعمل على تطوير تجربة بسيطة وقوية لتتبع العادات تساعدك على بناء روتين أفضل.",
@@ -532,11 +455,13 @@
   "termsChanges": "التغييرات على هذه الشروط",
   "termsChangesDescription": "قد يتم تحديث هذه الشروط مستقبلًا مع تطور TaskFlow. سيتم عرض التغييرات المهمة داخل التطبيق.",
 
-  "lastUpdated": "آخر تحديث: أغسطس 2026"
+  "lastUpdated": "آخر تحديث: أغسطس 2026",
 
-
-
-
-
-
+  "deleteCategoryTitle": "حذف التصنيف",
+  "deleteCategoryMessage": "هل أنت متأكد أنك تريد حذف \"{categoryName}\"؟",
+  "@deleteCategoryMessage": {
+    "placeholders": {
+      "categoryName": {}
+    }
+  }
 }

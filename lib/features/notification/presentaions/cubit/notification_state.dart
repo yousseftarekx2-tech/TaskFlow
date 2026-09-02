@@ -9,25 +9,13 @@ abstract class NotificationState extends Equatable {
   List<Object?> get props => [];
 }
 
-// ============================================================
-// INITIAL
-// ============================================================
-
 class NotificationInitial extends NotificationState {
   const NotificationInitial();
 }
 
-// ============================================================
-// LOADING
-// ============================================================
-
 class NotificationLoading extends NotificationState {
   const NotificationLoading();
 }
-
-// ============================================================
-// LOADED
-// ============================================================
 
 class NotificationLoaded extends NotificationState {
   final List<NotificationModel> notifications;
@@ -41,10 +29,6 @@ class NotificationLoaded extends NotificationState {
   @override
   List<Object?> get props => [notifications];
 }
-
-// ============================================================
-// ERROR
-// ============================================================
 
 class NotificationError extends NotificationState {
   final String message;

@@ -234,166 +234,101 @@
   "getStarted": "Get Started",
   "skip": "Skip",
 
-"tomorrow": "Tomorrow",
-"inDays": "In {days} days",
-"@inDays": {
-  "description": "Displays how many days remain until an upcoming task.",
-  "placeholders": {
-    "days": {
-      "type": "int"
+  "tomorrow": "Tomorrow",
+  "inDays": "In {days} days",
+  "@inDays": {
+    "description": "Displays how many days remain until an upcoming task.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
     }
-  }
-},
+  },
 
-"main": "Main",
-"home": "Home",
-"focus": "Focus",
-"statistics": "Statistics",
-"allTasks": "All Tasks",
-"completedTasks": "Completed Tasks",
-"logout": "Logout",
-
-"readAll": "Read all",
-"recentNotifications": "Recent notifications",
-"stayUpdatedWithYourTasks": "Stay updated with your tasks.",
-"unreadCount": "{count} unread",
-"taskCompletedNotification": "Task completed",
-"completedFlutterUiTask": "You completed your Flutter UI task.",
-"taskOverdueNotification": "Task overdue",
-"overdueTaskMessage": "Your \"Review project design\" task is overdue.",
-"taskReminderNotification": "Task reminder",
-"taskStartsIn30Minutes": "Your development task starts in 30 minutes.",
-"completedTeamMeetingTask": "You completed the team meeting task.",
-"minutesAgo": "{count} min ago",
-"hourAgo": "{count} hour ago",
-"yesterday": "Yesterday",
-"noNotifications": "No notifications",
-"allCaughtUp": "You are all caught up. New task updates and reminders will appear here.",
-
-"taskDetails": "Task Details",
-"status": "Status",
-"completed": "Completed",
-"overdue": "Overdue",
-"pending": "Pending",
-"description": "Description",
-"noDescriptionAdded": "No description added.",
-"scheduledDate": "Scheduled Date",
-"editTask": "Edit Task",
-"deleteTask": "Delete Task",
-"deleteTaskTitle": "Delete Task",
-"deleteTaskConfirmation": "Are you sure you want to delete this task? This action cannot be undone.",
-"cancel": "Cancel",
-
-"deleteTask": "Delete Task",
-"areYouSureDeleteTask": "Are you sure you want to delete this task? This action cannot be undone.",
-"cancel": "Cancel",
-"delete": "Delete",
-"edit": "Edit",
-"close": "Close",
-
-"noUserDataFound": "No user data found",
-"nameCannotBeEmpty": "Name cannot be empty",
-"profileUpdatedSuccessfully": "Profile updated successfully",
-"profilePhotoPickerWillBeAddedLater": "Profile photo picker will be added later",
-"changePasswordWillBeAddedLater": "Change password will be added later",
-
-"profile": "Profile",
-"personalInformation": "Personal Information",
-"security": "Security",
-"changePassword": "Change Password",
-"updateYourAccountPassword": "Update your account password",
-
-"profile": "Profile",
-"noUserDataFound": "No user data found",
-"personalInformation": "Personal Information",
-"changePassword": "Change Password",
-"updateYourAccountPassword": "Update your account password",
-"nameCannotBeEmpty": "Name cannot be empty",
-"profileUpdatedSuccessfully": "Profile updated successfully",
-"profilePhotoPickerWillBeAddedLater": "Profile photo picker will be added later",
-"security": "Security",
-
-"settings": "Settings",
-"preferences": "Preferences",
-"notifications": "Notifications",
-"manageTaskReminders": "Manage task reminders",
-"sound": "Sound",
-"manageSoundsAlerts": "Manage sounds and alerts",
-"darkMode": "Dark Mode",
-"useDarkAppearance": "Use dark appearance",
-"language": "Language",
-
-"productivity": "Productivity",
-"habits": "Habits",
-"manageProductivityHabits": "Manage productivity habits",
-
-"information": "Information",
-"aboutTaskFlow": "About TaskFlow",
-"learnMoreAboutTaskFlow": "Learn more about TaskFlow",
-"privacy": "Privacy",
-"privacyAndData": "Privacy and data",
-"termsOfService": "Terms of Service",
-"reviewOurTerms": "Review our terms",
-
-"english": "English",
-"arabic": "Arabic",
-
-"taskFlow": "TaskFlow",
-"version": "Version 1.0.0",
-
-"splashTaskFlow": "TaskFlow",
-"splashTagline": "Plan. Focus. Get Things Done.",
-
-"statistics": "Statistics",
-"trackYourProductivity": "Track your productivity",
-
-"week": "Week",
-"month": "Month",
-"year": "Year",
-
-"totalTasks": "Total Tasks",
-"completed": "Completed",
-"pending": "Pending",
-"overdue": "Overdue",
-
-"completionOverview": "Completion Overview",
-
-"weeklyProductivity": "Weekly Productivity",
-"tasksCompletedPerDay": "Tasks completed per day",
-
-"categories": "Categories",
-"noCategoryDataAvailable": "No category data available",
-
-"insights": "Insights",
-"mostProductive": "Most Productive",
-"topCategory": "Top Category",
-"completion": "Completion",
-"currentStreak": "Current Streak",
-
-"days": "days",
-"tasks": "tasks",
-
-"monday": "Monday",
-"tuesday": "Tuesday",
-"wednesday": "Wednesday",
-"thursday": "Thursday",
-"friday": "Friday",
-"saturday": "Saturday",
-"sunday": "Sunday",
-
-"sat": "Sat",
-"sun": "Sun",
-"mon": "Mon",
-"tue": "Tue",
-"wed": "Wed",
-"thu": "Thu",
-"fri": "Fri",
-
+  "main": "Main",
+  "home": "Home",
+  "focus": "Focus",
+  "statistics": "Statistics",
   "allTasks": "All Tasks",
-  "noTasksYet": "No tasks yet",
-  "am": "AM",
-  "pm": "PM",
+  "completedTasks": "Completed Tasks",
+  "logout": "Logout",
 
+  "readAll": "Read all",
+  "recentNotifications": "Recent notifications",
+  "stayUpdatedWithYourTasks": "Stay updated with your tasks.",
+  "unreadCount": "{count} unread",
+  "taskCompletedNotification": "Task completed",
+  "completedFlutterUiTask": "You completed your Flutter UI task.",
+  "taskOverdueNotification": "Task overdue",
+  "overdueTaskMessage": "Your \"Review project design\" task is overdue.",
+  "taskReminderNotification": "Task reminder",
+  "taskStartsIn30Minutes": "Your development task starts in 30 minutes.",
+  "completedTeamMeetingTask": "You completed the team meeting task.",
+  "minutesAgo": "{count} min ago",
+  "hourAgo": "{count} hour ago",
+  "yesterday": "Yesterday",
+  "noNotifications": "No notifications",
+  "allCaughtUp": "You are all caught up. New task updates and reminders will appear here.",
+
+  "taskDetails": "Task Details",
+  "status": "Status",
+  "description": "Description",
+  "noDescriptionAdded": "No description added.",
+  "scheduledDate": "Scheduled Date",
+  "deleteTask": "Delete Task",
+  "deleteTaskTitle": "Delete Task",
+  "deleteTaskConfirmation": "Are you sure you want to delete this task? This action cannot be undone.",
+  "areYouSureDeleteTask": "Are you sure you want to delete this task? This action cannot be undone.",
+  "delete": "Delete",
+  "edit": "Edit",
+  "close": "Close",
+
+  "noUserDataFound": "No user data found",
+  "nameCannotBeEmpty": "Name cannot be empty",
+  "profileUpdatedSuccessfully": "Profile updated successfully",
+  "profilePhotoPickerWillBeAddedLater": "Profile photo picker will be added later",
+  "changePasswordWillBeAddedLater": "Change password will be added later",
+
+  "profile": "Profile",
+  "personalInformation": "Personal Information",
+  "security": "Security",
+  "changePassword": "Change Password",
+  "updateYourAccountPassword": "Update your account password",
+
+  "splashTaskFlow": "TaskFlow",
+  "splashTagline": "Plan. Focus. Get Things Done.",
+
+  "trackYourProductivity": "Track your productivity",
+
+  "week": "Week",
+  "month": "Month",
+  "year": "Year",
+
+  "totalTasks": "Total Tasks",
+  "completionOverview": "Completion Overview",
+
+  "weeklyProductivity": "Weekly Productivity",
+  "tasksCompletedPerDay": "Tasks completed per day",
+
+  "noCategoryDataAvailable": "No category data available",
+
+  "insights": "Insights",
+  "mostProductive": "Most Productive",
+  "topCategory": "Top Category",
+  "completion": "Completion",
+  "currentStreak": "Current Streak",
+
+  "days": "days",
+
+  "monday": "Monday",
+  "tuesday": "Tuesday",
+  "wednesday": "Wednesday",
+  "thursday": "Thursday",
+  "friday": "Friday",
+  "saturday": "Saturday",
+  "sunday": "Sunday",
+
+  "noTasksYet": "No tasks yet",
 
   "categoryNoTasks": "No tasks in {categoryName}",
   "@categoryNoTasks": {
@@ -407,33 +342,24 @@
   "categoryTasksDescription": "Tasks assigned to this category will appear here.",
   "categoryDateTimeSeparator": " • ",
 
-  "completedTasks": "Completed Tasks",
-"noCompletedTasks": "No completed tasks",
-"createTaskTitle": "Create Task",
-"editTaskTitle": "Edit Task",
-"taskTitleLabel": "Task Title",
-"taskTitleHint": "Enter task title",
-"descriptionLabel": "Description",
-"descriptionHint": "Add task description (optional)",
-"categoryLabel": "Category",
-"noCategoriesYet": "No categories yet",
-"addCategory": "Add",
-"dateLabel": "Date",
-"timeLabel": "Time",
-"selectDate": "Select date",
-"selectTime": "Select time",
-"saveChanges": "Save Changes",
-"createTask": "Create Task",
-"taskTitleRequired": "Please enter a task title",
-"categoryRequired": "Please select a category",
-"dateRequired": "Please select a date",
-"timeRequired": "Please select a time",
-"taskCreatedSuccessfully": "Task created successfully",
-"addCategoryTitle": "Add Category",
-"categoryNameLabel": "Category name",
-"categoryNameHint": "Enter category name",
-"chooseColor": "Choose color",
-"cancel": "Cancel",
+  "noCompletedTasks": "No completed tasks",
+
+  "createTaskTitle": "Create Task",
+  "editTaskTitle": "Edit Task",
+  "taskTitleLabel": "Task Title",
+  "taskTitleHint": "Enter task title",
+  "descriptionLabel": "Description",
+  "descriptionHint": "Add task description (optional)",
+  "categoryLabel": "Category",
+  "dateLabel": "Date",
+  "timeLabel": "Time",
+  "taskTitleRequired": "Please enter a task title",
+  "categoryRequired": "Please select a category",
+  "dateRequired": "Please select a date",
+  "timeRequired": "Please select a time",
+  "addCategoryTitle": "Add Category",
+  "categoryNameLabel": "Category name",
+  "categoryNameHint": "Enter category name",
 
   "notificationSettings": "Notification Settings",
   "enableOrDisableAllNotifications": "Enable or disable all notifications",
@@ -450,6 +376,7 @@
       }
     }
   },
+
   "focusNotifications": "Focus Notifications",
   "receiveFocusSessionNotifications": "Receive notifications related to focus sessions",
   "focusSessionFinished": "Focus Session Finished",
@@ -460,7 +387,6 @@
   "notifyWhenBreakEnds": "Notify me when a break ends",
   "notificationSettingsInfo": "When notifications are enabled, TaskFlow can send task reminders and focus notifications based on your preferences.",
 
-  
   "focusSessionFinishedNotification": "Focus Session Completed",
   "focusSessionFinishedMessage": "Your focus session has finished.",
   "breakStartedNotification": "Break Started",
@@ -468,7 +394,6 @@
   "breakFinishedNotification": "Break Finished",
   "breakFinishedMessage": "Your break has finished. Ready to focus again?",
   "justNow": "Just now",
-
 
   "notificationTaskCompletedTitle": "Task Completed",
   "notificationTaskCompletedBody": "You completed a task. Great job!",
@@ -496,7 +421,6 @@
   "notificationStreakTitle": "Keep your streak alive 🔥",
   "notificationStreakBody": "Keep going and protect your TaskFlow streak! 🔥",
 
-
   "dailyAppNotificationTitle": "Ready to get things done?",
   "dailyAppNotificationBody": "Come manage your tasks and make today productive.",
   "streakNotificationTitle": "Keep your streak alive 🔥",
@@ -509,8 +433,6 @@
       }
     }
   },
-
-
 
   "habitsIntro": "Build healthy routines, track your progress, and stay consistent with your daily goals.",
   "habitsComingSoon": "Habits are coming soon",
@@ -534,12 +456,13 @@
   "termsChanges": "Changes to These Terms",
   "termsChangesDescription": "These terms may be updated in the future as TaskFlow evolves. Important changes will be reflected in the application.",
 
-  "lastUpdated": "Last updated: August 2026"
+  "lastUpdated": "Last updated: August 2026",
 
-
-
-
-
-
-
+  "deleteCategoryTitle": "Delete Category",
+  "deleteCategoryMessage": "Are you sure you want to delete \"{categoryName}\"?",
+  "@deleteCategoryMessage": {
+    "placeholders": {
+      "categoryName": {}
+    }
+  }
 }

@@ -17,10 +17,6 @@ class NotificationCubit extends Cubit<NotificationState> {
   NotificationCubit(this._notificationStorage, this._settingsStorage)
     : super(const NotificationInitial());
 
-  // ============================================================
-  // LOAD
-  // ============================================================
-
   Future<void> loadNotifications() async {
     emit(const NotificationLoading());
 
@@ -35,29 +31,14 @@ class NotificationCubit extends Cubit<NotificationState> {
     }
   }
 
-  // ============================================================
-  // ADD NOTIFICATION
-  // ============================================================
-
   Future<void> addNotification({
     required NotificationType type,
     String? taskId,
     String? taskTitle,
   }) async {
-    // ============================================================
-    // TASK COMPLETED
-    // ============================================================
-    //
-    // Completing a task must NEVER create a notification.
-    // ============================================================
-
     if (type == NotificationType.taskCompleted) {
       return;
     }
-
-    // ============================================================
-    // MASTER NOTIFICATIONS
-    // ============================================================
 
     final bool notificationsEnabled = await _settingsStorage
         .getNotificationsEnabled();
@@ -66,25 +47,13 @@ class NotificationCubit extends Cubit<NotificationState> {
       return;
     }
 
-    // ============================================================
-    // SPECIFIC NOTIFICATION SETTINGS
-    // ============================================================
-
     final bool typeEnabled = await _isNotificationTypeEnabled(type);
 
     if (!typeEnabled) {
       return;
     }
 
-    // ============================================================
-    // LOAD EXISTING NOTIFICATIONS
-    // ============================================================
-
     final notifications = await _notificationStorage.getNotifications();
-
-    // ============================================================
-    // PREVENT DUPLICATE TASK REMINDER
-    // ============================================================
 
     if (type == NotificationType.taskReminder && taskId != null) {
       final bool alreadyExists = notifications.any(
@@ -97,10 +66,6 @@ class NotificationCubit extends Cubit<NotificationState> {
         return;
       }
     }
-
-    // ============================================================
-    // CREATE NOTIFICATION
-    // ============================================================
 
     final DateTime now = DateTime.now();
 
@@ -117,27 +82,14 @@ class NotificationCubit extends Cubit<NotificationState> {
 
     await _notificationStorage.saveNotifications(notifications);
 
-    // ============================================================
-    // SOUND
-    // ============================================================
-
     final bool soundEnabled = await _settingsStorage.getSound();
-
-    // ============================================================
-    // LOCALIZATION
-    // ============================================================
-    //
-    // Read the currently selected app language.
-    // ============================================================
 
     final String language = await _settingsStorage.getLanguage();
 
-    final bool isArabic =
-        language.toLowerCase() == 'arabic' || language.toLowerCase() == 'ar';
+    final String normalizedLanguage = language.toLowerCase();
 
-    // ============================================================
-    // GET LOCALIZED TEXT
-    // ============================================================
+    final bool isArabic =
+        normalizedLanguage == 'arabic' || normalizedLanguage == 'ar';
 
     final AppLocalizations l10n = isArabic
         ? lookupAppLocalizations(const Locale('ar'))
@@ -147,10 +99,6 @@ class NotificationCubit extends Cubit<NotificationState> {
 
     final String body = _getBody(type, l10n, taskTitle: taskTitle);
 
-    // ============================================================
-    // SHOW LOCAL NOTIFICATION
-    // ============================================================
-
     await LocalNotificationService.instance.showNotification(
       id: now.millisecondsSinceEpoch.remainder(2147483647),
       title: title,
@@ -159,43 +107,19 @@ class NotificationCubit extends Cubit<NotificationState> {
       payload: notification.id,
     );
 
-    // ============================================================
-    // UPDATE STATE
-    // ============================================================
-
     emit(NotificationLoaded(List.unmodifiable(notifications)));
   }
 
-  // ============================================================
-  // CHECK NOTIFICATION TYPE
-  // ============================================================
-
   Future<bool> _isNotificationTypeEnabled(NotificationType type) async {
     switch (type) {
-      // ==========================================================
-      // TASK COMPLETED
-      // ==========================================================
-
       case NotificationType.taskCompleted:
         return false;
-
-      // ==========================================================
-      // TASK OVERDUE
-      // ==========================================================
 
       case NotificationType.taskOverdue:
         return true;
 
-      // ==========================================================
-      // TASK REMINDER
-      // ==========================================================
-
       case NotificationType.taskReminder:
-        return await _settingsStorage.getTaskRemindersEnabled();
-
-      // ==========================================================
-      // FOCUS SESSION FINISHED
-      // ==========================================================
+        return _settingsStorage.getTaskRemindersEnabled();
 
       case NotificationType.focusSessionFinished:
         final bool focusEnabled = await _settingsStorage
@@ -206,10 +130,6 @@ class NotificationCubit extends Cubit<NotificationState> {
 
         return focusEnabled && sessionFinishedEnabled;
 
-      // ==========================================================
-      // BREAK STARTED
-      // ==========================================================
-
       case NotificationType.breakStarted:
         final bool focusEnabled = await _settingsStorage
             .getFocusNotificationsEnabled();
@@ -218,10 +138,6 @@ class NotificationCubit extends Cubit<NotificationState> {
             .getBreakStarted();
 
         return focusEnabled && breakStartedEnabled;
-
-      // ==========================================================
-      // BREAK FINISHED
-      // ==========================================================
 
       case NotificationType.breakFinished:
         final bool focusEnabled = await _settingsStorage
@@ -232,25 +148,13 @@ class NotificationCubit extends Cubit<NotificationState> {
 
         return focusEnabled && breakFinishedEnabled;
 
-      // ==========================================================
-      // DAILY APP
-      // ==========================================================
-
       case NotificationType.dailyApp:
         return true;
-
-      // ==========================================================
-      // STREAK
-      // ==========================================================
 
       case NotificationType.streak:
         return true;
     }
   }
-
-  // ============================================================
-  // TITLE
-  // ============================================================
 
   String _getTitle(NotificationType type, AppLocalizations l10n) {
     switch (type) {
@@ -279,10 +183,6 @@ class NotificationCubit extends Cubit<NotificationState> {
         return l10n.notificationStreakTitle;
     }
   }
-
-  // ============================================================
-  // BODY
-  // ============================================================
 
   String _getBody(
     NotificationType type,
@@ -324,10 +224,6 @@ class NotificationCubit extends Cubit<NotificationState> {
     }
   }
 
-  // ============================================================
-  // MARK AS READ
-  // ============================================================
-
   Future<void> markAsRead(String notificationId) async {
     final notifications = await _notificationStorage.getNotifications();
 
@@ -346,10 +242,6 @@ class NotificationCubit extends Cubit<NotificationState> {
     emit(NotificationLoaded(List.unmodifiable(notifications)));
   }
 
-  // ============================================================
-  // MARK ALL AS READ
-  // ============================================================
-
   Future<void> markAllAsRead() async {
     final notifications = await _notificationStorage.getNotifications();
 
@@ -366,10 +258,6 @@ class NotificationCubit extends Cubit<NotificationState> {
     emit(NotificationLoaded(List.unmodifiable(updatedNotifications)));
   }
 
-  // ============================================================
-  // DELETE
-  // ============================================================
-
   Future<void> deleteNotification(String notificationId) async {
     final notifications = await _notificationStorage.getNotifications();
 
@@ -381,10 +269,6 @@ class NotificationCubit extends Cubit<NotificationState> {
 
     emit(NotificationLoaded(List.unmodifiable(notifications)));
   }
-
-  // ============================================================
-  // CLEAR ALL
-  // ============================================================
 
   Future<void> clearAll() async {
     await _notificationStorage.clearNotifications();

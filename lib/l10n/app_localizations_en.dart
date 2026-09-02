@@ -135,7 +135,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get taskCreatedSuccessfully => 'Task created successfully';
 
   @override
-  String get addCategory => 'Add';
+  String get addCategory => 'Add Category';
 
   @override
   String get categoryName => 'Category Name';
@@ -144,7 +144,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get enterCategoryName => 'Enter category name';
 
   @override
-  String get chooseColor => 'Choose color';
+  String get chooseColor => 'Choose Color';
 
   @override
   String get cancel => 'Cancel';
@@ -336,28 +336,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calendar => 'Calendar';
 
   @override
-  String get mon => 'Mon';
+  String get mon => 'Monday';
 
   @override
-  String get tue => 'Tue';
+  String get tue => 'Tuesday';
 
   @override
-  String get wed => 'Wed';
+  String get wed => 'Wednesday';
 
   @override
-  String get thu => 'Thu';
+  String get thu => 'Thursday';
 
   @override
-  String get fri => 'Fri';
+  String get fri => 'Friday';
 
   @override
-  String get sat => 'Sat';
+  String get sat => 'Saturday';
 
   @override
-  String get sun => 'Sun';
+  String get sun => 'Sunday';
 
   @override
-  String get tasks => 'tasks';
+  String get tasks => 'Tasks';
 
   @override
   String taskCount(int count) {
@@ -1088,4 +1088,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lastUpdated => 'Last updated: August 2026';
+
+  @override
+  String get deleteCategoryTitle => 'Delete Category';
+
+  @override
+  String deleteCategoryMessage(Object categoryName) {
+    return 'Are you sure you want to delete \"$categoryName\"?';
+  }
 }

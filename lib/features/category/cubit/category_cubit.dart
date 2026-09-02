@@ -11,32 +11,59 @@ class CategoryCubit extends Cubit<CategoryState> {
 
   CategoryCubit(this._storage) : super(const CategoryState());
 
-  // ============================================================
-  // LOAD
-  // ============================================================
-
   Future<void> loadCategories() async {
     emit(state.copyWith(loading: true));
 
-    final categories = await _storage.getCategories();
+    try {
+      final List<CategoryModel> categories = await _storage.getCategories();
 
-    emit(CategoryState(categories: categories, loading: false));
+      if (isClosed) {
+        return;
+      }
+
+      emit(
+        CategoryState(
+          categories: categories,
+          loading: false,
+        ),
+      );
+    } catch (_) {
+      if (isClosed) {
+        return;
+      }
+
+      emit(
+        const CategoryState(
+          categories: [],
+          loading: false,
+        ),
+      );
+    }
   }
 
-  // ============================================================
-  // ADD CATEGORY
-  // ============================================================
-
-  Future<void> addCategory({
+  Future<CategoryModel?> addCategory({
     required String name,
     required Color color,
     required IconData icon,
   }) async {
-    final String id = DateTime.now().microsecondsSinceEpoch.toString();
+    final String trimmedName = name.trim();
+
+    if (trimmedName.isEmpty) {
+      return null;
+    }
+
+    final bool alreadyExists = state.categories.any(
+      (category) =>
+          category.name.trim().toLowerCase() == trimmedName.toLowerCase(),
+    );
+
+    if (alreadyExists) {
+      return null;
+    }
 
     final CategoryModel category = CategoryModel(
-      id: id,
-      name: name.trim(),
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      name: trimmedName,
       color: color,
       icon: icon,
       isDefault: false,
@@ -49,19 +76,27 @@ class CategoryCubit extends Cubit<CategoryState> {
 
     await _storage.saveCategories(updatedCategories);
 
-    emit(state.copyWith(categories: updatedCategories));
-  }
+    if (isClosed) {
+      return category;
+    }
 
-  // ============================================================
-  // DELETE CATEGORY
-  // ============================================================
-
-  Future<void> deleteCategory(String id) async {
-    final category = state.categories.firstWhere(
-      (category) => category.id == id,
+    emit(
+      state.copyWith(
+        categories: updatedCategories,
+        loading: false,
+      ),
     );
 
-    // Default categories cannot be deleted.
+    return category;
+  }
+
+  Future<void> deleteCategory(String id) async {
+    final CategoryModel? category = _findCategory(id);
+
+    if (category == null) {
+      return;
+    }
+
     if (category.isDefault) {
       return;
     }
@@ -72,12 +107,40 @@ class CategoryCubit extends Cubit<CategoryState> {
 
     await _storage.saveCategories(updatedCategories);
 
-    emit(state.copyWith(categories: updatedCategories));
+    if (isClosed) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        categories: updatedCategories,
+      ),
+    );
   }
 
-  // ============================================================
-  // UPDATE CATEGORY
-  // ============================================================
+  CategoryModel? getCategoryByName(String name) {
+    for (final CategoryModel category in state.categories) {
+      if (category.name == name) {
+        return category;
+      }
+    }
+
+    return null;
+  }
+
+  CategoryModel? getCategoryById(String id) {
+    return _findCategory(id);
+  }
+
+  CategoryModel? _findCategory(String id) {
+    for (final CategoryModel category in state.categories) {
+      if (category.id == id) {
+        return category;
+      }
+    }
+
+    return null;
+  }
 
   Future<void> updateCategory({
     required String id,
@@ -85,23 +148,79 @@ class CategoryCubit extends Cubit<CategoryState> {
     Color? color,
     IconData? icon,
   }) async {
-    final List<CategoryModel> updatedCategories = state.categories.map((
-      category,
-    ) {
+    if (name != null && name.trim().isNotEmpty) {
+      final String newName = name.trim().toLowerCase();
+
+      final bool duplicate = state.categories.any(
+        (category) =>
+            category.id != id &&
+            category.name.trim().toLowerCase() == newName,
+      );
+
+      if (duplicate) {
+        return;
+      }
+    }
+
+    final List<CategoryModel> updatedCategories =
+        state.categories.map((category) {
       if (category.id != id) {
         return category;
       }
 
-      // Default categories can also be protected from editing.
       if (category.isDefault) {
         return category;
       }
 
-      return category.copyWith(name: name, color: color, icon: icon);
+      return category.copyWith(
+        name: name?.trim(),
+        color: color,
+        icon: icon,
+      );
     }).toList();
 
     await _storage.saveCategories(updatedCategories);
 
-    emit(state.copyWith(categories: updatedCategories));
+    if (isClosed) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        categories: updatedCategories,
+      ),
+    );
+  }
+
+  Future<void> clearCategories() async {
+    await _storage.clearCategories();
+
+    if (isClosed) {
+      return;
+    }
+
+    emit(
+      const CategoryState(
+        categories: [],
+        loading: false,
+      ),
+    );
+  }
+
+  Future<void> resetToDefaultCategories() async {
+    final List<CategoryModel> defaults = _storage.defaultCategories();
+
+    await _storage.saveCategories(defaults);
+
+    if (isClosed) {
+      return;
+    }
+
+    emit(
+      CategoryState(
+        categories: defaults,
+        loading: false,
+      ),
+    );
   }
 }

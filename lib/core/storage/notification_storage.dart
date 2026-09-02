@@ -6,10 +6,6 @@ import 'package:task_flow/features/notification/data/model/notification_model.da
 class NotificationStorage {
   static const String _notificationsKey = 'notifications';
 
-  // ============================================================
-  // GET NOTIFICATIONS
-  // ============================================================
-
   Future<List<NotificationModel>> getNotifications() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -33,10 +29,6 @@ class NotificationStorage {
     }
   }
 
-  // ============================================================
-  // SAVE NOTIFICATIONS
-  // ============================================================
-
   Future<void> saveNotifications(List<NotificationModel> notifications) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -46,10 +38,6 @@ class NotificationStorage {
 
     await prefs.setString(_notificationsKey, data);
   }
-
-  // ============================================================
-  // CLEAR
-  // ============================================================
 
   Future<void> clearNotifications() async {
     final prefs = await SharedPreferences.getInstance();

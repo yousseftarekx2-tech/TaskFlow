@@ -12,6 +12,7 @@ class TaskCard extends StatelessWidget {
     required this.category,
     required this.time,
     required this.color,
+    required this.scheduledAt,
     this.completed = false,
     this.overdue = false,
     required this.taskId,
@@ -22,13 +23,16 @@ class TaskCard extends StatelessWidget {
   final String taskId;
   final String time;
   final Color color;
+  final DateTime scheduledAt;
   final bool completed;
   final bool overdue;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colorScheme = theme.colorScheme;
+
+    final bool isSmallWidth = MediaQuery.sizeOf(context).width < 360;
 
     final Color titleColor = completed || overdue
         ? colorScheme.onSurfaceVariant
@@ -36,9 +40,31 @@ class TaskCard extends StatelessWidget {
 
     final Color secondaryColor = colorScheme.onSurfaceVariant;
 
+    final DateTime now = DateTime.now();
+    final DateTime overdueAt = scheduledAt.add(TaskBloc.overdueDuration);
+
+    final bool hasStarted = !now.isBefore(scheduledAt);
+
+    final bool canComplete =
+        !completed && !overdue && hasStarted && now.isBefore(overdueAt);
+
+    final Color statusColor = completed
+        ? AppColors.needthis
+        : overdue
+        ? Colors.red
+        : canComplete
+        ? AppColors.needthis
+        : colorScheme.onSurfaceVariant;
+
+    final double cardHeight = isSmallWidth ? 88 : 96;
+    final double indicatorHeight = isSmallWidth ? 64 : 72;
+    final double horizontalGap = isSmallWidth ? 12 : 16;
+    final double trailingGap = isSmallWidth ? 14 : 18;
+    final double statusSize = isSmallWidth ? 22 : 24;
+
     return Container(
       width: double.infinity,
-      height: 96,
+      height: cardHeight,
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(18),
@@ -58,20 +84,21 @@ class TaskCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 5,
-            height: 64,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: const BorderRadius.only(
-                topRight: Radius.circular(5),
-                bottomRight: Radius.circular(5),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Container(
+              width: 5,
+              height: indicatorHeight,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(5),
+                  bottomRight: Radius.circular(5),
+                ),
               ),
             ),
           ),
-
-          const SizedBox(width: 16),
-
+          SizedBox(width: horizontalGap),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -82,7 +109,7 @@ class TaskCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: isSmallWidth ? 16 : 18,
                     fontWeight: FontWeight.w700,
                     color: titleColor,
                     decoration: completed
@@ -92,40 +119,41 @@ class TaskCard extends StatelessWidget {
                     decorationThickness: 1.5,
                   ),
                 ),
-
-                const SizedBox(height: 8),
-
+                SizedBox(height: isSmallWidth ? 6 : 8),
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                      child: Text(
-                        category,
-                        style: TextStyle(
-                          color: color,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
+                    Flexible(
+                      child: Container(
+                        constraints: BoxConstraints(
+                          maxWidth: isSmallWidth ? 105 : 140,
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmallWidth ? 8 : 10,
+                          vertical: isSmallWidth ? 4 : 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        child: Text(
+                          category,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: color,
+                            fontSize: isSmallWidth ? 11 : 13,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ),
-
-                    const SizedBox(width: 9),
-
+                    SizedBox(width: isSmallWidth ? 7 : 9),
                     Icon(
                       Icons.access_time_outlined,
-                      size: 16,
+                      size: isSmallWidth ? 14 : 16,
                       color: secondaryColor,
                     ),
-
                     const SizedBox(width: 4),
-
                     Flexible(
                       child: Text(
                         time,
@@ -133,7 +161,7 @@ class TaskCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: secondaryColor,
-                          fontSize: 13,
+                          fontSize: isSmallWidth ? 11 : 13,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -143,44 +171,37 @@ class TaskCard extends StatelessWidget {
               ],
             ),
           ),
-
-          const SizedBox(width: 12),
-
+          SizedBox(width: isSmallWidth ? 8 : 12),
           InkWell(
             borderRadius: BorderRadius.circular(20),
-            onTap: completed || overdue
-                ? null
-                : () {
+            onTap: canComplete
+                ? () {
                     context.read<TaskBloc>().add(CompleteTask(taskId));
-                  },
+                  }
+                : null,
             child: Container(
-              width: 24,
-              height: 24,
+              width: statusSize,
+              height: statusSize,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: completed
-                    ? AppColors.needthis.withValues(alpha: 0.10)
-                    : overdue
-                    ? Colors.red.withValues(alpha: 0.10)
-                    : Colors.transparent,
-                border: Border.all(
-                  color: completed
-                      ? AppColors.needthis
-                      : overdue
-                      ? Colors.red
-                      : AppColors.needthis,
-                  width: 2,
-                ),
+                border: Border.all(color: statusColor, width: 2),
               ),
               child: completed
-                  ? const Icon(Icons.check, color: AppColors.needthis, size: 17)
+                  ? Icon(
+                      Icons.check,
+                      color: AppColors.needthis,
+                      size: isSmallWidth ? 15 : 17,
+                    )
                   : overdue
-                  ? const Icon(Icons.close_rounded, color: Colors.red, size: 17)
+                  ? Icon(
+                      Icons.close_rounded,
+                      color: Colors.red,
+                      size: isSmallWidth ? 15 : 17,
+                    )
                   : null,
             ),
           ),
-
-          const SizedBox(width: 18),
+          SizedBox(width: trailingGap),
         ],
       ),
     );

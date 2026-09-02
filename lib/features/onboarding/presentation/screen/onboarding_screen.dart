@@ -52,14 +52,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final Size screenSize = MediaQuery.sizeOf(context);
+
+    final bool isSmallWidth = screenSize.width < 360;
+    final bool isShortScreen = screenSize.height < 700;
+
+    final double horizontalPadding = isSmallWidth ? 20 : 30;
+    final double buttonHeight = isSmallWidth ? 48 : 52;
+    final double indicatorSpacing = isShortScreen
+        ? AppSpacing.md
+        : AppSpacing.lg;
+    final double bottomSpacing = isShortScreen ? AppSpacing.sm : AppSpacing.md;
 
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
-            // --------------------------------------------------
-            // Onboarding Content
-            // --------------------------------------------------
             Expanded(
               child: PageView(
                 controller: _pageController,
@@ -74,13 +82,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     title: l10n.organizeYourTasksOnboarding,
                     description: l10n.organizeYourTasksOnboardingDescription,
                   ),
-
                   OnboardingWidget(
                     image: 'assets/images/onboarding_2.png',
                     title: l10n.neverMissADeadline,
                     description: l10n.neverMissADeadlineDescription,
                   ),
-
                   OnboardingWidget(
                     image: 'assets/images/onboarding_3.png',
                     title: l10n.achieveYourGoals,
@@ -89,10 +95,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ],
               ),
             ),
-
-            // --------------------------------------------------
-            // Indicator
-            // --------------------------------------------------
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: OnboardingIndicator(
@@ -100,49 +102,45 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 image: _onboardingIndicators[_currentPage],
               ),
             ),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            // --------------------------------------------------
-            // Next / Get Started Button
-            // --------------------------------------------------
+            SizedBox(height: indicatorSpacing),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
               child: SizedBox(
                 width: double.infinity,
-                height: 52,
+                height: buttonHeight,
                 child: ElevatedButton(
                   onPressed: _currentPage == 2
                       ? () {
                           context.go(Routes.login);
                         }
                       : _nextPage,
-                  child: Text(_currentPage == 2 ? l10n.getStarted : l10n.next),
+                  child: Text(
+                    _currentPage == 2 ? l10n.getStarted : l10n.next,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             ),
-
-            // --------------------------------------------------
-            // Skip
-            // --------------------------------------------------
             SizedBox(
-              height: 48,
+              height: isSmallWidth ? 44 : 48,
               child: TextButton(
                 onPressed: _currentPage == 2 ? null : _skipOnboarding,
                 child: Text(
                   l10n.skip,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: _currentPage == 2
                         ? Colors.transparent
                         : const Color(0xFF64748B),
-                    fontSize: 14,
+                    fontSize: isSmallWidth ? 13 : 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ),
-
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: bottomSpacing),
           ],
         ),
       ),

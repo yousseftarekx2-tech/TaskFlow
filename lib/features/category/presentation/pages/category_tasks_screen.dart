@@ -1,365 +1,1040 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:task_flow/l10n/app_localizations.dart';
-
+import 'package:task_flow/core/constants/app_colors.dart';
+import 'package:task_flow/features/category/cubit/category_cubit.dart';
+import 'package:task_flow/features/category/cubit/category_state.dart';
+import 'package:task_flow/features/category/data/model/category_model.dart';
 import 'package:task_flow/features/tasks/data/model/task_model.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_bloc.dart';
-import 'package:task_flow/features/tasks/presentation/bloc/task_state.dart';
+import 'package:task_flow/features/tasks/presentation/bloc/task_event.dart';
 import 'package:task_flow/features/settings/presnetation/cubit/settings_cubit.dart';
+import 'package:task_flow/l10n/app_localizations.dart';
 
-class CategoryTasksScreen extends StatelessWidget {
-  final String categoryName;
+class CreateTaskScreen extends StatefulWidget {
+  final TaskModel? task;
 
-  const CategoryTasksScreen({
-    super.key,
-    required this.categoryName,
-  });
+  const CreateTaskScreen({super.key, this.task});
+
+  bool get isEditing => task != null;
 
   @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<SettingsCubit, SettingsState>(
-      builder: (context, settingsState) {
-        final bool isDark =
-            settingsState.darkModeEnabled;
+  State<CreateTaskScreen> createState() => _CreateTaskScreenState();
+}
 
-        final AppLocalizations l10n =
-            AppLocalizations.of(context)!;
+class _CreateTaskScreenState extends State<CreateTaskScreen> {
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
 
-        final Color backgroundColor = isDark
-            ? const Color(0xFF0F172A)
-            : const Color(0xFFF8FAFC);
+  String? _selectedCategory;
 
-        final Color cardColor = isDark
-            ? const Color(0xFF1E293B)
-            : Colors.white;
+  DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
 
-        final Color textColor = isDark
-            ? Colors.white
-            : const Color(0xFF0F172A);
+  @override
+  void initState() {
+    super.initState();
 
-        const Color secondaryTextColor =
-            Color(0xFF94A3B8);
+    final TaskModel? task = widget.task;
 
-        return Scaffold(
-          backgroundColor: backgroundColor,
+    if (task != null) {
+      _titleController.text = task.title;
+      _descriptionController.text = task.description;
 
-          appBar: AppBar(
-            backgroundColor: backgroundColor,
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            surfaceTintColor: Colors.transparent,
+      _selectedCategory = task.category;
 
-            centerTitle: true,
+      _selectedDate = DateTime(
+        task.scheduledAt.year,
+        task.scheduledAt.month,
+        task.scheduledAt.day,
+      );
 
-            leading: IconButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
+      _selectedTime = TimeOfDay(
+        hour: task.scheduledAt.hour,
+        minute: task.scheduledAt.minute,
+      );
+    }
+  }
 
-              icon: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                size: 19,
-                color: textColor,
-              ),
-            ),
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
 
-            title: Text(
-              categoryName,
+    super.dispose();
+  }
 
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: textColor,
-              ),
-            ),
-          ),
+  void _setDefaultCategoryIfNeeded(List<CategoryModel> categories) {
+    if (widget.isEditing) {
+      return;
+    }
 
-          body: BlocBuilder<TaskBloc, TaskState>(
-            builder: (context, taskState) {
-              if (taskState is TaskLoading) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
+    if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
+      return;
+    }
 
-              if (taskState is TaskError) {
-                return Center(
-                  child: Text(
-                    taskState.message,
+    if (categories.isEmpty) {
+      return;
+    }
 
-                    style: TextStyle(
-                      color: textColor,
-                    ),
+    _selectedCategory = categories.first.name;
+  }
+
+  Future<void> _selectDate() async {
+    final DateTime now = DateTime.now();
+
+    final DateTime today = DateTime(now.year, now.month, now.day);
+
+    final DateTime selectedDate = _selectedDate != null
+        ? DateTime(
+            _selectedDate!.year,
+            _selectedDate!.month,
+            _selectedDate!.day,
+          )
+        : today;
+
+    final DateTime firstDate = selectedDate.isBefore(today)
+        ? selectedDate
+        : today;
+
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: firstDate,
+      lastDate: DateTime(now.year + 5, now.month, now.day),
+      builder: (context, child) {
+        final bool isDark = context.read<SettingsCubit>().state.darkModeEnabled;
+
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: AppColors.needthis,
+                    onPrimary: Colors.white,
+                    surface: const Color(0xFF1E293B),
+                    onSurface: Colors.white,
+                  )
+                : ColorScheme.light(
+                    primary: AppColors.needthis,
+                    onPrimary: Colors.white,
+                    surface: Colors.white,
+                    onSurface: const Color(0xFF0F172A),
                   ),
-                );
-              }
-
-              if (taskState is! TaskLoaded) {
-                return const SizedBox.shrink();
-              }
-
-              final List<TaskModel> categoryTasks =
-                  taskState.tasks
-                      .where(
-                        (task) =>
-                            task.category
-                                .trim()
-                                .toLowerCase() ==
-                            categoryName
-                                .trim()
-                                .toLowerCase(),
-                      )
-                      .toList();
-
-              if (categoryTasks.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(30),
-
-                    child: Column(
-                      mainAxisAlignment:
-                          MainAxisAlignment.center,
-
-                      children: [
-                        Icon(
-                          Icons.task_alt_rounded,
-                          size: 55,
-                          color: secondaryTextColor,
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        Text(
-                          l10n.noTasksInThisCategory,
-
-                          textAlign: TextAlign.center,
-
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: textColor,
-                          ),
-                        ),
-
-                        const SizedBox(height: 7),
-
-                        Text(
-                          l10n.createTaskAndAssignToCategory(
-                            categoryName,
-                          ),
-
-                          textAlign: TextAlign.center,
-
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: secondaryTextColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
-              return ListView.separated(
-                padding: const EdgeInsets.fromLTRB(
-                  20,
-                  16,
-                  20,
-                  30,
-                ),
-
-                itemCount: categoryTasks.length,
-
-                separatorBuilder: (_, __) {
-                  return const SizedBox(height: 10);
-                },
-
-                itemBuilder: (context, index) {
-                  final TaskModel task =
-                      categoryTasks[index];
-
-                  return _TaskCard(
-                    task: task,
-                    cardColor: cardColor,
-                    textColor: textColor,
-                    secondaryTextColor:
-                        secondaryTextColor,
-                    l10n: l10n,
-                  );
-                },
-              );
-            },
           ),
+          child: child!,
         );
       },
     );
+
+    if (!mounted || pickedDate == null) {
+      return;
+    }
+
+    setState(() {
+      _selectedDate = pickedDate;
+    });
   }
-}
 
-// ============================================================
-// TASK CARD
-// ============================================================
+  Future<void> _selectTime() async {
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime ?? TimeOfDay.now(),
+      builder: (context, child) {
+        final bool isDark = context.read<SettingsCubit>().state.darkModeEnabled;
 
-class _TaskCard extends StatelessWidget {
-  final TaskModel task;
-  final Color cardColor;
-  final Color textColor;
-  final Color secondaryTextColor;
-  final AppLocalizations l10n;
-
-  const _TaskCard({
-    required this.task,
-    required this.cardColor,
-    required this.textColor,
-    required this.secondaryTextColor,
-    required this.l10n,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(14),
-      ),
-
-      child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
-
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  task.title,
-
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: textColor,
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: AppColors.needthis,
+                    onPrimary: Colors.white,
+                    surface: const Color(0xFF1E293B),
+                    onSurface: Colors.white,
+                  )
+                : ColorScheme.light(
+                    primary: AppColors.needthis,
+                    onPrimary: Colors.white,
+                    surface: Colors.white,
+                    onSurface: const Color(0xFF0F172A),
                   ),
-                ),
-              ),
-
-              _StatusBadge(
-                status: task.status,
-                l10n: l10n,
-              ),
-            ],
           ),
-
-          if (task.description
-              .trim()
-              .isNotEmpty) ...[
-            const SizedBox(height: 7),
-
-            Text(
-              task.description,
-
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-
-              style: TextStyle(
-                fontSize: 12,
-                color: secondaryTextColor,
-              ),
-            ),
-          ],
-
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Icon(
-                Icons.schedule_rounded,
-                size: 15,
-                color: secondaryTextColor,
-              ),
-
-              const SizedBox(width: 5),
-
-              Text(
-                _formatDate(task.scheduledAt),
-
-                style: TextStyle(
-                  fontSize: 11,
-                  color: secondaryTextColor,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+          child: child!,
+        );
+      },
     );
+
+    if (!mounted || pickedTime == null) {
+      return;
+    }
+
+    setState(() {
+      _selectedTime = pickedTime;
+    });
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(AppLocalizations l10n) {
+    if (_selectedDate == null) {
+      return l10n.selectDate;
+    }
+
+    final DateTime date = _selectedDate!;
+
     return '${date.day.toString().padLeft(2, '0')}/'
         '${date.month.toString().padLeft(2, '0')}/'
         '${date.year}';
   }
-}
 
-// ============================================================
-// STATUS BADGE
-// ============================================================
+  String _formatTime(AppLocalizations l10n) {
+    if (_selectedTime == null) {
+      return l10n.selectTime;
+    }
 
-class _StatusBadge extends StatelessWidget {
-  final TaskStatus status;
-  final AppLocalizations l10n;
+    return _selectedTime!.format(context);
+  }
 
-  const _StatusBadge({
-    required this.status,
-    required this.l10n,
-  });
+  DateTime _buildScheduledAt() {
+    return DateTime(
+      _selectedDate!.year,
+      _selectedDate!.month,
+      _selectedDate!.day,
+      _selectedTime!.hour,
+      _selectedTime!.minute,
+    );
+  }
+
+  void _saveTask() {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
+    final String title = _titleController.text.trim();
+    final String description = _descriptionController.text.trim();
+
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.taskTitleRequired)));
+
+      return;
+    }
+
+    if (_selectedCategory == null || _selectedCategory!.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.categoryRequired)));
+
+      return;
+    }
+
+    if (_selectedDate == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.dateRequired)));
+
+      return;
+    }
+
+    if (_selectedTime == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.timeRequired)));
+
+      return;
+    }
+
+    final DateTime scheduledAt = _buildScheduledAt();
+
+    final TaskBloc taskBloc = context.read<TaskBloc>();
+
+    if (widget.isEditing) {
+      final TaskModel oldTask = widget.task!;
+
+      final DateTime now = DateTime.now();
+
+      TaskStatus newStatus = oldTask.status;
+
+      if (oldTask.isCompleted) {
+        newStatus = TaskStatus.completed;
+      } else if (!scheduledAt.isAfter(now)) {
+        newStatus = TaskStatus.overdue;
+      } else {
+        newStatus = TaskStatus.pending;
+      }
+
+      final TaskModel updatedTask = oldTask.copyWith(
+        title: title,
+        description: description,
+        category: _selectedCategory!,
+        status: newStatus,
+        scheduledAt: scheduledAt,
+      );
+
+      taskBloc.add(UpdateTask(updatedTask));
+
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
+
+      return;
+    }
+
+    final DateTime now = DateTime.now();
+
+    final TaskModel newTask = TaskModel(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      title: title,
+      description: description,
+      category: _selectedCategory!,
+      status: scheduledAt.isBefore(now)
+          ? TaskStatus.overdue
+          : TaskStatus.pending,
+      createdAt: now,
+      scheduledAt: scheduledAt,
+    );
+
+    taskBloc.add(AddTask(newTask));
+
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.taskCreatedSuccessfully)));
+
+    Navigator.of(context).pop();
+  }
+
+  Future<void> _showAddCategoryDialog() async {
+    final CategoryModel? result = await showDialog<CategoryModel>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return const _AddCategoryDialog();
+      },
+    );
+
+    if (!mounted || result == null) {
+      return;
+    }
+
+    final CategoryCubit categoryCubit = context.read<CategoryCubit>();
+
+    final CategoryModel? addedCategory = await categoryCubit.addCategory(
+      name: result.name,
+      color: result.color,
+      icon: result.icon,
+    );
+
+    if (!mounted || addedCategory == null) {
+      return;
+    }
+
+    setState(() {
+      _selectedCategory = addedCategory.name;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    late String text;
-    late Color color;
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
 
-    switch (status) {
-      case TaskStatus.pending:
-        text = l10n.pending;
-        color = const Color(0xFF2563EB);
-        break;
+    final bool isEditing = widget.isEditing;
 
-      case TaskStatus.completed:
-        text = l10n.completed;
-        color = const Color(0xFF16A34A);
-        break;
+    final SettingsState settingsState = context.watch<SettingsCubit>().state;
 
-      case TaskStatus.overdue:
-        text = l10n.overdue;
-        color = const Color(0xFFEF4444);
-        break;
-    }
+    final bool isDark = settingsState.darkModeEnabled;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 9,
-        vertical: 5,
-      ),
+    final Color backgroundColor = isDark
+        ? const Color(0xFF0F172A)
+        : const Color(0xFFF8FAFC);
 
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(8),
-      ),
+    final Color cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
 
-      child: Text(
-        text,
+    final Color primaryTextColor = isDark
+        ? Colors.white
+        : const Color(0xFF0F172A);
 
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: color,
+    final Color secondaryTextColor = const Color(0xFF94A3B8);
+
+    final Color borderColor = isDark
+        ? const Color(0xFF334155)
+        : const Color(0xFFE2E8F0);
+
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        centerTitle: true,
+        leading: IconButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 18,
+            color: primaryTextColor,
+          ),
+        ),
+        title: Text(
+          isEditing ? l10n.editTaskTitle : l10n.createTaskTitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 19,
+            fontWeight: FontWeight.w700,
+            color: primaryTextColor,
+          ),
         ),
       ),
+      body: BlocBuilder<CategoryCubit, CategoryState>(
+        builder: (context, categoryState) {
+          final List<CategoryModel> categories = categoryState.categories;
+
+          _setDefaultCategoryIfNeeded(categories);
+
+          final String? selectedCategory =
+              _selectedCategory ??
+              (categories.isNotEmpty ? categories.first.name : null);
+
+          return SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final bool isSmallWidth = constraints.maxWidth < 360;
+                final bool isShortHeight = constraints.maxHeight < 700;
+
+                final double horizontalPadding = isSmallWidth ? 16 : 20;
+
+                final double sectionSpacing = isSmallWidth ? 18 : 21;
+
+                final double bottomSpacing = isShortHeight
+                    ? 20
+                    : isSmallWidth
+                    ? 28
+                    : 34;
+
+                return SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    8,
+                    horizontalPadding,
+                    30,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildLabel(
+                        l10n.taskTitleLabel,
+                        isDark: isDark,
+                        fontSize: isSmallWidth ? 13 : 14,
+                      ),
+                      const SizedBox(height: 9),
+                      _buildTextField(
+                        controller: _titleController,
+                        hint: l10n.taskTitleHint,
+                        isDark: isDark,
+                        cardColor: cardColor,
+                        primaryTextColor: primaryTextColor,
+                        borderColor: borderColor,
+                        secondaryTextColor: secondaryTextColor,
+                      ),
+                      SizedBox(height: sectionSpacing),
+                      _buildLabel(
+                        l10n.descriptionLabel,
+                        isDark: isDark,
+                        fontSize: isSmallWidth ? 13 : 14,
+                      ),
+                      const SizedBox(height: 9),
+                      _buildTextField(
+                        controller: _descriptionController,
+                        hint: l10n.descriptionHint,
+                        maxLines: 4,
+                        isDark: isDark,
+                        cardColor: cardColor,
+                        primaryTextColor: primaryTextColor,
+                        borderColor: borderColor,
+                        secondaryTextColor: secondaryTextColor,
+                      ),
+                      SizedBox(height: sectionSpacing),
+                      _buildLabel(
+                        l10n.categoryLabel,
+                        isDark: isDark,
+                        fontSize: isSmallWidth ? 13 : 14,
+                      ),
+                      const SizedBox(height: 11),
+                      if (categories.isNotEmpty)
+                        Wrap(
+                          spacing: isSmallWidth ? 7 : 9,
+                          runSpacing: isSmallWidth ? 7 : 9,
+                          children: [
+                            ...categories.map(
+                              (category) => _buildCategoryChip(
+                                category,
+                                selectedCategory: selectedCategory,
+                                isSmallWidth: isSmallWidth,
+                              ),
+                            ),
+                            _buildAddCategoryChip(
+                              isDark: isDark,
+                              cardColor: cardColor,
+                              borderColor: borderColor,
+                              secondaryTextColor: secondaryTextColor,
+                              l10n: l10n,
+                              isSmallWidth: isSmallWidth,
+                            ),
+                          ],
+                        )
+                      else
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              l10n.noCategoriesYet,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: secondaryTextColor,
+                              ),
+                            ),
+                            _buildAddCategoryChip(
+                              isDark: isDark,
+                              cardColor: cardColor,
+                              borderColor: borderColor,
+                              secondaryTextColor: secondaryTextColor,
+                              l10n: l10n,
+                              isSmallWidth: isSmallWidth,
+                            ),
+                          ],
+                        ),
+                      SizedBox(height: sectionSpacing),
+                      _buildLabel(
+                        l10n.dateLabel,
+                        isDark: isDark,
+                        fontSize: isSmallWidth ? 13 : 14,
+                      ),
+                      const SizedBox(height: 9),
+                      _buildSelectField(
+                        icon: Icons.calendar_today_outlined,
+                        text: _formatDate(l10n),
+                        selected: _selectedDate != null,
+                        onTap: _selectDate,
+                        isDark: isDark,
+                        cardColor: cardColor,
+                        primaryTextColor: primaryTextColor,
+                        borderColor: borderColor,
+                        secondaryTextColor: secondaryTextColor,
+                      ),
+                      SizedBox(height: sectionSpacing),
+                      _buildLabel(
+                        l10n.timeLabel,
+                        isDark: isDark,
+                        fontSize: isSmallWidth ? 13 : 14,
+                      ),
+                      const SizedBox(height: 9),
+                      _buildSelectField(
+                        icon: Icons.access_time_outlined,
+                        text: _formatTime(l10n),
+                        selected: _selectedTime != null,
+                        onTap: _selectTime,
+                        isDark: isDark,
+                        cardColor: cardColor,
+                        primaryTextColor: primaryTextColor,
+                        borderColor: borderColor,
+                        secondaryTextColor: secondaryTextColor,
+                      ),
+                      SizedBox(height: bottomSpacing),
+                      SizedBox(
+                        width: double.infinity,
+                        height: isSmallWidth ? 50 : 52,
+                        child: ElevatedButton(
+                          onPressed: _saveTask,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.needthis,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            isEditing ? l10n.saveChanges : l10n.createTask,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: isSmallWidth ? 13 : 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildLabel(
+    String text, {
+    required bool isDark,
+    double fontSize = 14,
+  }) {
+    return Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: fontSize,
+        fontWeight: FontWeight.w700,
+        color: isDark ? Colors.white : const Color(0xFF0F172A),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required bool isDark,
+    required Color cardColor,
+    required Color primaryTextColor,
+    required Color borderColor,
+    required Color secondaryTextColor,
+    int maxLines = 1,
+  }) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: primaryTextColor,
+      ),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+          color: secondaryTextColor,
+        ),
+        filled: true,
+        fillColor: cardColor,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 15,
+          vertical: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: borderColor, width: 0.7),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: borderColor, width: 0.7),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.needthis, width: 1),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryChip(
+    CategoryModel category, {
+    required String? selectedCategory,
+    required bool isSmallWidth,
+  }) {
+    final bool selected = selectedCategory == category.name;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedCategory = category.name;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: EdgeInsets.symmetric(
+          horizontal: selected
+              ? (isSmallWidth ? 13 : 15)
+              : (isSmallWidth ? 11 : 13),
+          vertical: selected ? (isSmallWidth ? 9 : 10) : (isSmallWidth ? 7 : 8),
+        ),
+        decoration: BoxDecoration(
+          color: category.color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(selected ? 10 : 9),
+          border: Border.all(
+            color: selected
+                ? category.color.withValues(alpha: 0.40)
+                : category.color.withValues(alpha: 0.08),
+            width: selected ? 1.1 : 0.8,
+          ),
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: isSmallWidth ? 130 : 180),
+          child: Text(
+            category.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: selected
+                  ? (isSmallWidth ? 12 : 13)
+                  : (isSmallWidth ? 11 : 12),
+              fontWeight: FontWeight.w700,
+              color: category.color,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddCategoryChip({
+    required bool isDark,
+    required Color cardColor,
+    required Color borderColor,
+    required Color secondaryTextColor,
+    required AppLocalizations l10n,
+    required bool isSmallWidth,
+  }) {
+    return GestureDetector(
+      onTap: _showAddCategoryDialog,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: isSmallWidth ? 11 : 13,
+          vertical: isSmallWidth ? 7 : 8,
+        ),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(9),
+          border: Border.all(
+            color: isDark ? const Color(0xFF475569) : const Color(0xFFD6DCE5),
+            width: 0.8,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.add_rounded,
+              size: isSmallWidth ? 14 : 15,
+              color: secondaryTextColor,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              l10n.addCategory,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: isSmallWidth ? 11 : 12,
+                fontWeight: FontWeight.w600,
+                color: secondaryTextColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectField({
+    required IconData icon,
+    required String text,
+    required bool selected,
+    required VoidCallback onTap,
+    required bool isDark,
+    required Color cardColor,
+    required Color primaryTextColor,
+    required Color borderColor,
+    required Color secondaryTextColor,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        height: 50,
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor, width: 0.7),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: selected ? AppColors.needthis : secondaryTextColor,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: selected ? primaryTextColor : secondaryTextColor,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 20,
+              color: secondaryTextColor,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AddCategoryDialog extends StatefulWidget {
+  const _AddCategoryDialog();
+
+  @override
+  State<_AddCategoryDialog> createState() => _AddCategoryDialogState();
+}
+
+class _AddCategoryDialogState extends State<_AddCategoryDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  Color _selectedColor = AppColors.needthis;
+
+  static const List<Color> _colors = [
+    Color(0xFF2563EB),
+    Color(0xFFF97316),
+    Color(0xFF16A34A),
+    Color(0xFF8B5CF6),
+    Color(0xFFEC4899),
+    Color(0xFF0EA5E9),
+  ];
+
+  @override
+  void dispose() {
+    _controller.dispose();
+
+    super.dispose();
+  }
+
+  void _addCategory() {
+    final String name = _controller.text.trim();
+
+    if (name.isEmpty) {
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+
+    final CategoryModel category = CategoryModel(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      name: name,
+      color: _selectedColor,
+      icon: Icons.category_outlined,
+      isDefault: false,
+    );
+
+    Navigator.of(context).pop(category);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
+    final bool isDark = context.watch<SettingsCubit>().state.darkModeEnabled;
+
+    final Color dialogBackground = isDark
+        ? const Color(0xFF1E293B)
+        : Colors.white;
+
+    final Color primaryTextColor = isDark
+        ? Colors.white
+        : const Color(0xFF0F172A);
+
+    final Color secondaryTextColor = isDark
+        ? const Color(0xFF94A3B8)
+        : const Color(0xFF64748B);
+
+    final Color fieldBackground = isDark
+        ? const Color(0xFF0F172A)
+        : const Color(0xFFF8FAFC);
+
+    final Color borderColor = isDark
+        ? const Color(0xFF334155)
+        : const Color(0xFFE2E8F0);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isSmallWidth = constraints.maxWidth < 360;
+
+        final double horizontalPadding = isSmallWidth ? 16 : 20;
+
+        return AlertDialog(
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: 24,
+          ),
+          backgroundColor: dialogBackground,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: Text(
+            l10n.addCategoryTitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: isSmallWidth ? 17 : 18,
+              fontWeight: FontWeight.w700,
+              color: primaryTextColor,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: isSmallWidth ? 300 : 340),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.categoryNameLabel,
+                    style: TextStyle(
+                      fontSize: isSmallWidth ? 12 : 13,
+                      fontWeight: FontWeight.w700,
+                      color: primaryTextColor,
+                    ),
+                  ),
+                  const SizedBox(height: 9),
+                  TextField(
+                    controller: _controller,
+                    style: TextStyle(
+                      fontSize: isSmallWidth ? 12 : 13,
+                      color: primaryTextColor,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: l10n.categoryNameHint,
+                      hintStyle: TextStyle(
+                        fontSize: isSmallWidth ? 11 : 12,
+                        color: secondaryTextColor,
+                      ),
+                      filled: true,
+                      fillColor: fieldBackground,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(11),
+                        borderSide: BorderSide(color: borderColor),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(11),
+                        borderSide: BorderSide(color: borderColor),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(11),
+                        borderSide: const BorderSide(color: AppColors.needthis),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: isSmallWidth ? 16 : 20),
+                  Text(
+                    l10n.chooseColor,
+                    style: TextStyle(
+                      fontSize: isSmallWidth ? 12 : 13,
+                      fontWeight: FontWeight.w700,
+                      color: primaryTextColor,
+                    ),
+                  ),
+                  SizedBox(height: isSmallWidth ? 10 : 12),
+                  Wrap(
+                    spacing: isSmallWidth ? 10 : 12,
+                    runSpacing: isSmallWidth ? 10 : 12,
+                    children: _colors.map((color) {
+                      final bool selected = _selectedColor == color;
+
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedColor = color;
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          width: isSmallWidth ? 30 : 32,
+                          height: isSmallWidth ? 30 : 32,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: selected
+                                ? Border.all(color: primaryTextColor, width: 2)
+                                : null,
+                          ),
+                          child: selected
+                              ? Icon(
+                                  Icons.check_rounded,
+                                  size: isSmallWidth ? 16 : 18,
+                                  color: Colors.white,
+                                )
+                              : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                FocusScope.of(context).unfocus();
+
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                l10n.cancel,
+                style: TextStyle(
+                  fontSize: isSmallWidth ? 12 : 14,
+                  color: secondaryTextColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: _addCategory,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.needthis,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallWidth ? 12 : 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Text(
+                l10n.addCategory,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: isSmallWidth ? 11 : 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

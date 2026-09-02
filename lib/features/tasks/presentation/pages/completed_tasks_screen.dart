@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:task_flow/core/constants/app_colors.dart';
+import 'package:task_flow/features/category/cubit/category_cubit.dart';
+import 'package:task_flow/features/category/data/model/category_model.dart';
 import 'package:task_flow/features/home/presentation/widgets/task_card.dart';
+import 'package:task_flow/features/settings/presnetation/cubit/settings_cubit.dart';
 import 'package:task_flow/features/tasks/data/model/task_model.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_bloc.dart';
 import 'package:task_flow/features/tasks/presentation/bloc/task_state.dart';
-import 'package:task_flow/features/settings/presnetation/cubit/settings_cubit.dart';
 import 'package:task_flow/l10n/app_localizations.dart';
 
 class CompletedTasksScreen extends StatelessWidget {
@@ -14,129 +16,130 @@ class CompletedTasksScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final Size screenSize = MediaQuery.sizeOf(context);
 
-    final taskState = context.watch<TaskBloc>().state;
-    final settingsState =
-        context.watch<SettingsCubit>().state;
+    final bool isSmallWidth = screenSize.width < 360;
+    final bool isShortScreen = screenSize.height < 700;
 
-    final bool isDark =
-        settingsState.darkModeEnabled;
+    final double horizontalPadding = isSmallWidth ? 14 : 20;
+    final double topPadding = isShortScreen ? 8 : 12;
+    final double bottomPadding = isShortScreen ? 20 : 30;
+    final double separatorHeight = isSmallWidth ? 8 : 10;
 
-    final List<TaskModel> completedTasks =
-        taskState is TaskLoaded
-        ? taskState.tasks
-              .where((task) => task.isCompleted)
-              .toList()
-        : [];
+    final TaskState taskState = context.watch<TaskBloc>().state;
+    final SettingsState settingsState = context.watch<SettingsCubit>().state;
 
-    completedTasks.sort(
-      (a, b) => b.scheduledAt.compareTo(a.scheduledAt),
-    );
+    final bool isDark = settingsState.darkModeEnabled;
+
+    final List<TaskModel> completedTasks = taskState is TaskLoaded
+        ? taskState.tasks.where((task) => task.isCompleted).toList()
+        : <TaskModel>[];
+
+    completedTasks.sort((a, b) => b.scheduledAt.compareTo(a.scheduledAt));
+
+    final Color backgroundColor = isDark
+        ? const Color(0xFF0F172A)
+        : const Color(0xFFF8FAFC);
+
+    final Color primaryTextColor = isDark
+        ? Colors.white
+        : const Color(0xFF0F172A);
+
+    final Color mutedTextColor = isDark
+        ? const Color(0xFF64748B)
+        : const Color(0xFF94A3B8);
 
     return Scaffold(
-      backgroundColor: isDark
-          ? const Color(0xFF0F172A)
-          : const Color(0xFFF8FAFC),
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: isDark
-            ? const Color(0xFF0F172A)
-            : const Color(0xFFF8FAFC),
+        backgroundColor: backgroundColor,
         elevation: 0,
+        scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
+        toolbarHeight: isSmallWidth ? 54 : 56,
+        leadingWidth: isSmallWidth ? 48 : 56,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
+          padding: EdgeInsets.zero,
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            size: 20,
-            color: isDark
-                ? Colors.white
-                : const Color(0xFF0F172A),
+            size: isSmallWidth ? 18 : 20,
+            color: primaryTextColor,
           ),
         ),
+        titleSpacing: isSmallWidth ? 0 : null,
         title: Text(
           l10n.completedTasks,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 22,
+            fontSize: isSmallWidth ? 20 : 22,
             fontWeight: FontWeight.w800,
-            color: isDark
-                ? Colors.white
-                : const Color(0xFF0F172A),
+            color: primaryTextColor,
           ),
         ),
       ),
       body: completedTasks.isEmpty
           ? Center(
-              child: Text(
-                l10n.noCompletedTasks,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: isDark
-                      ? const Color(0xFF64748B)
-                      : const Color(0xFF94A3B8),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                child: Text(
+                  l10n.noCompletedTasks,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: isSmallWidth ? 13 : 14,
+                    fontWeight: FontWeight.w600,
+                    color: mutedTextColor,
+                  ),
                 ),
               ),
             )
           : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(
-                20,
-                12,
-                20,
-                30,
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                topPadding,
+                horizontalPadding,
+                bottomPadding,
               ),
               itemCount: completedTasks.length,
-              separatorBuilder: (_, __) =>
-                  const SizedBox(height: 10),
+              separatorBuilder: (_, _) => SizedBox(height: separatorHeight),
               itemBuilder: (context, index) {
-                final task = completedTasks[index];
+                final TaskModel task = completedTasks[index];
 
                 return TaskCard(
                   title: task.title,
                   category: task.category,
                   taskId: task.id,
-                  time: _formatScheduledAt(
-                    task.scheduledAt,
-                  ),
-                  color: _categoryColor(task.category),
+                  time: _formatScheduledAt(task.scheduledAt, l10n),
+                  color: _categoryColor(context, task.category),
                   completed: true,
                   overdue: false,
+                  scheduledAt: task.scheduledAt,
                 );
               },
             ),
     );
   }
 
-  String _formatScheduledAt(DateTime dateTime) {
-    final int hour =
-        dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
+  String _formatScheduledAt(DateTime dateTime, AppLocalizations l10n) {
+    final int hour = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
 
-    final String minute =
-        dateTime.minute.toString().padLeft(2, '0');
+    final String minute = dateTime.minute.toString().padLeft(2, '0');
 
-    final String period =
-        dateTime.hour >= 12 ? 'PM' : 'AM';
+    final String period = dateTime.hour >= 12 ? l10n.pm : l10n.am;
 
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} • '
         '$hour:$minute $period';
   }
 
-  Color _categoryColor(String category) {
-    switch (category) {
-      case 'Design':
-        return const Color(0xFF2563EB);
-      case 'Meeting':
-        return const Color(0xFFF97316);
-      case 'Development':
-        return const Color(0xFF16A34A);
-      case 'Work':
-        return const Color(0xFF8B5CF6);
-      case 'Health':
-        return const Color(0xFF14B8A6);
-      case 'Learning':
-        return const Color(0xFFF97316);
-      default:
-        return AppColors.needthis;
-    }
+  Color _categoryColor(BuildContext context, String categoryName) {
+    final CategoryModel? category = context
+        .read<CategoryCubit>()
+        .getCategoryByName(categoryName);
+
+    return category?.color ?? AppColors.needthis;
   }
 }

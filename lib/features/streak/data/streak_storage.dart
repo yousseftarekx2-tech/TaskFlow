@@ -5,23 +5,14 @@ class StreakStorage {
 
   String _lastVisitKey(String userId) => 'last_visit_$userId';
 
-  // ============================================================
-  // GET STREAK
-  // ============================================================
-
   Future<int> getStreak(String userId) async {
     final prefs = await SharedPreferences.getInstance();
 
     return prefs.getInt(_streakKey(userId)) ?? 0;
   }
 
-  // ============================================================
-  // GET LAST VISIT
-  // ============================================================
-
   Future<DateTime?> getLastVisit(String userId) async {
     final prefs = await SharedPreferences.getInstance();
-
     final String? value = prefs.getString(_lastVisitKey(userId));
 
     if (value == null) {
@@ -35,10 +26,6 @@ class StreakStorage {
     }
   }
 
-  // ============================================================
-  // SAVE STREAK
-  // ============================================================
-
   Future<void> saveStreak({
     required String userId,
     required int streak,
@@ -47,19 +34,13 @@ class StreakStorage {
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.setInt(_streakKey(userId), streak);
-
     await prefs.setString(_lastVisitKey(userId), lastVisit.toIso8601String());
   }
-
-  // ============================================================
-  // CLEAR USER STREAK
-  // ============================================================
 
   Future<void> clearUserStreak(String userId) async {
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.remove(_streakKey(userId));
-
     await prefs.remove(_lastVisitKey(userId));
   }
 }
